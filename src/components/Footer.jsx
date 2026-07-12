@@ -81,7 +81,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto pt-8 border-t border-black/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-dark/50">
         <p>Thaara Umesh Casting Agency © Copyright 2025 | All Rights Reserved.</p>
         <p>
-          Designed by <a href="https://gradixtech.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-semibold">arvicomm.com</a>
+          Designed by <a href="https://gradixtech.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-semibold">Gradix Tech</a>
         </p>
       </div>
     </footer>
