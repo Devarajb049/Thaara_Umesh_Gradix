@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9b0b16; /* Deep red seen in the buttons/accents */
+  --color-primary-dark: #7a0911;
+  --color-secondary: #fdf5f5; /* Light pink background */
+  --color-dark: #1a1a1a;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif; /* Or similar for the elegant headings */
+}
+
+@layer base {
+  html, body {
+    @apply font-sans bg-secondary text-dark;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+/* Custom styles for Lenis if needed */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Cinematic Animations */
+@keyframes spotlight {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-spotlight {
+  background-size: 200% auto;
+  animation: spotlight 4s linear infinite alternate;
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+@keyframes clap {
+  0%, 100% { transform: rotate(0deg); }
+  15%, 35% { transform: rotate(16.5deg); }
+}
+
+.animate-clap {
+  animation: clap 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
