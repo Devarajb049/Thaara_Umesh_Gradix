@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import HeroSlider from '../components/HeroSlider';
 import ActingSchoolContent from '../components/ActingSchoolContent';
 import Testimonials from '../components/Testimonials';
+import Workshops from '../components/Workshops';
+import Graduation from '../components/Graduation';
 
 const ActingSchoolPage = () => {
   useEffect(() => {
@@ -14,6 +16,8 @@ const ActingSchoolPage = () => {
       <HeroSlider />
       <ActingSchoolContent />
       <Testimonials />
+      <Workshops />
+      <Graduation />
     </div>
   );
 };

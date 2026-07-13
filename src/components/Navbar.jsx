@@ -76,10 +76,18 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Mobile Menu Toggle (Open) */}
-          <button className="md:hidden text-dark relative z-40" onClick={() => setIsOpen(true)}>
-            <Menu size={24} />
-          </button>
+          {/* Mobile Menu Toggle & Submit Profile Button */}
+          <div className="flex md:hidden items-center gap-4">
+            <Link 
+              to="/submit-profile" 
+              className="bg-primary text-white px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest hover:bg-primary-dark transition-all duration-300 shadow-md shadow-primary/20 hover:scale-105 active:scale-95 whitespace-nowrap"
+            >
+              SUBMIT PROFILE
+            </Link>
+            <button className="text-dark relative z-40" onClick={() => setIsOpen(true)}>
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
       </nav>
 
