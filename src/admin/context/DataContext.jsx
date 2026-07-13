@@ -47,7 +47,9 @@ export const DataProvider = ({ children }) => {
   // Showcase state
   const [showcases, setShowcases] = useState(() => {
     const saved = localStorage.getItem('admin-showcases');
-    if (saved) return JSON.parse(saved);
+    const parsed = saved ? JSON.parse(saved) : [];
+    // Auto upgrade if it only has mock dummy data (less than 10 items)
+    if (parsed.length > 10) return parsed;
     
     // Map baseVideos to showcases schema
     return baseVideos.map((v, i) => ({
@@ -57,7 +59,7 @@ export const DataProvider = ({ children }) => {
       description: v.description || 'Professional portfolio video matching the casting projects.',
       thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`,
       youtubeUrl: `https://www.youtube.com/watch?v=${v.id}`,
-      category: v.category === 'Corporate' ? 'Feature Films' : v.category,
+      category: v.category,
       tags: [v.brand || 'Showcase'],
       duration: v.duration || '01:00',
       displayOrder: i + 1,
@@ -70,17 +72,24 @@ export const DataProvider = ({ children }) => {
   const [testimonials, setTestimonials] = useState(() => {
     const saved = localStorage.getItem('admin-testimonials');
     const parsed = saved ? JSON.parse(saved) : [];
-    // Auto upgrade if it only has mock dummy data (3 items)
-    if (parsed.length > 3) return parsed;
     
-    return testimonialsData.map((t, i) => ({
+    // Check if it already has the synchronized keys
+    const isUpgraded = parsed.length > 3 && parsed.every(t => t.personName && t.designation);
+    if (isUpgraded) return parsed;
+    
+    const sourceData = parsed.length > 3 ? parsed : testimonialsData;
+    return sourceData.map((t, i) => ({
       id: t.id ? `t_${t.id}` : `t_init_${i}`,
-      clientName: t.name,
-      role: t.profession,
-      feedback: t.review,
-      avatar: t.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-      status: 'active',
-      displayOrder: i + 1
+      clientName: t.name || t.clientName,
+      personName: t.name || t.clientName || t.personName,
+      role: t.profession || t.role,
+      designation: t.profession || t.role || t.designation,
+      feedback: t.review || t.feedback,
+      review: t.review || t.feedback || t.review,
+      avatar: t.profileImage || t.avatar || t.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      photo: t.profileImage || t.avatar || t.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      status: t.status || 'active',
+      displayOrder: t.displayOrder || i + 1
     }));
   });
 
@@ -225,11 +234,28 @@ export const DataProvider = ({ children }) => {
     setArtistRegistrations(prev => [newReg, ...prev]);
   };
 
+  const setTestimonialsSynced = (newVal) => {
+    setTestimonials(prev => {
+      const rawVal = typeof newVal === 'function' ? newVal(prev) : newVal;
+      return rawVal.map(t => ({
+        ...t,
+        clientName: t.personName || t.clientName || '',
+        role: t.designation || t.role || '',
+        feedback: t.review || t.feedback || '',
+        avatar: t.photo || t.avatar || '',
+        personName: t.clientName || t.personName || '',
+        designation: t.role || t.designation || '',
+        review: t.feedback || t.review || '',
+        photo: t.avatar || t.photo || ''
+      }));
+    });
+  };
+
   return (
     <DataContext.Provider value={{
       clients, setClients,
       showcases, setShowcases,
-      testimonials, setTestimonials,
+      testimonials, setTestimonials: setTestimonialsSynced,
       workshops, setWorkshops,
       events, setEvents,
       shootingHouseImages, setShootingHouseImages,

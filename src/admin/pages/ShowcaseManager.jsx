@@ -395,7 +395,9 @@ const ShowcaseManager = () => {
                 choices: [
                   { value: 'Commercials', label: 'Commercials' }, 
                   { value: 'Short Films', label: 'Short Films' },
-                  { value: 'Feature Films', label: 'Feature Films' }
+                  { value: 'Feature Films', label: 'Feature Films' },
+                  { value: 'Corporate', label: 'Corporate' },
+                  { value: 'Music Videos', label: 'Music Videos' }
                 ] 
               },
               { 
@@ -525,6 +527,8 @@ const ShowcaseManager = () => {
               <option value="Commercials">Commercials</option>
               <option value="Short Films">Short Films</option>
               <option value="Feature Films">Feature Films</option>
+              <option value="Corporate">Corporate</option>
+              <option value="Music Videos">Music Videos</option>
             </select>
           </div>
 
