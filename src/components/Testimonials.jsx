@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, Quote, Sparkles } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
 export const testimonialsData = [
   {
@@ -216,13 +217,23 @@ export const TestimonialCard = ({ testimonial, onSelect }) => {
 };
 
 const Testimonials = () => {
+  const { testimonials } = useData();
+  const activeTestimonials = testimonials.filter(t => t.status === 'active').map(t => ({
+    id: t.id,
+    name: t.clientName,
+    profession: t.role,
+    review: t.feedback,
+    profileImage: t.avatar,
+    logo: "/images/logos/ignite.png"
+  }));
+
   const [selectedTestimonial, setSelectedTestimonial] = useState(null);
   const scrollContainerRef = useRef(null);
 
   // Group testimonials into pairs of 2 for mobile stacked layout
   const chunkedTestimonials = [];
-  for (let i = 0; i < testimonialsData.length; i += 2) {
-    chunkedTestimonials.push(testimonialsData.slice(i, i + 2));
+  for (let i = 0; i < activeTestimonials.length; i += 2) {
+    chunkedTestimonials.push(activeTestimonials.slice(i, i + 2));
   }
 
   return (
@@ -244,7 +255,7 @@ const Testimonials = () => {
 
         {/* Desktop/Tablet Layout: Responsive Grid (compact, equal height) */}
         <div className="hidden md:grid grid-cols-2 xl:grid-cols-3 gap-6">
-          {testimonialsData.map((testimonial) => (
+          {activeTestimonials.map((testimonial) => (
             <div key={testimonial.id} className="h-full">
               <TestimonialCard testimonial={testimonial} onSelect={setSelectedTestimonial} />
             </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Send, Award, Compass, ChevronDown } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
 const ContactUsPage = () => {
+  const { addContactMessage } = useData();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +26,13 @@ const ContactUsPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.phone) {
+      addContactMessage({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.service,
+        message: formData.message
+      });
       setIsSubmitted(true);
     }
   };

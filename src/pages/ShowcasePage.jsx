@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import { PlayCircle, X, ChevronDown } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
-const ShowcasePage = () => {
-  const [selectedVideo, setSelectedVideo] = useState(null);
-  const [category, setCategory] = useState('All Categories');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // State for pagination (3 rows * 4 columns = 12 items initially)
-  const [visibleCount, setVisibleCount] = useState(12);
-
-  // Base Data matching the exact portfolio projects from the website
-  const baseVideos = [
+export const baseVideos = [
   {
     "id": "_CZAM4GRc_I",
     "title": "Z Perfume EDP | Television Commercial | Eskimo Advertising Factory",
@@ -337,7 +329,22 @@ const ShowcasePage = () => {
   }
 ];
 
-  const videos = baseVideos;
+const ShowcasePage = () => {
+  const { showcases } = useData();
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [category, setCategory] = useState('All Categories');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  const videos = showcases.filter(s => s.status === 'active').map(s => ({
+    id: s.id,
+    title: s.title,
+    brand: s.tags?.[0] || 'Thaara Umesh',
+    description: s.description,
+    duration: s.duration,
+    thumbnail: s.thumbnail,
+    category: s.category
+  }));
 
   const categories = ['All Categories', 'Commercials', 'Short Films', 'Corporate', 'Music Videos'];
 

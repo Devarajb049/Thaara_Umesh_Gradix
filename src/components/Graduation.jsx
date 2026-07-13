@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, Users, Star, X, Image as ImageIcon, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
 const stats = [
   { id: 1, value: "250+", label: "Graduates", icon: <Users size={20} className="text-primary" /> },
@@ -17,7 +18,7 @@ const highlights = [
   "Closing Ceremony Celebration"
 ];
 
-const galleryImages = [
+export const galleryImages = [
   {
     id: 1,
     url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
@@ -93,6 +94,20 @@ const galleryImages = [
 ];
 
 const Graduation = () => {
+  const { events } = useData();
+  const activeEvents = events.filter(ev => ev.status === 'active');
+  
+  const activeGalleryImages = activeEvents.length > 0 
+    ? activeEvents.flatMap((ev, evIdx) => 
+        (ev.galleryImages || []).map((imgUrl, imgIdx) => ({
+          id: `g_${ev.id}_${imgIdx}`,
+          url: imgUrl,
+          title: ev.eventTitle,
+          description: ev.description || 'Graduation Ceremony memories.'
+        }))
+      )
+    : galleryImages;
+
   const [activePhoto, setActivePhoto] = useState(null);
 
   return (
@@ -185,7 +200,7 @@ const Graduation = () => {
 
         {/* Masonry / Responsive Grid Photo Gallery */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {galleryImages.map((image, index) => (
+          {activeGalleryImages.map((image, index) => (
             <motion.div
               key={image.id}
               initial={{ opacity: 0, scale: 0.95 }}

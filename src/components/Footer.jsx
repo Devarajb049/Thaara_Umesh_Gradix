@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const Footer = () => {
   const links = {
     QuickLinks: ['Home', 'About Us', 'Showcase', 'Acting Advice'],
@@ -80,9 +82,13 @@ const Footer = () => {
 
       <div className="max-w-7xl mx-auto pt-8 border-t border-black/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-dark/50">
         <p>Thaara Umesh Casting Agency © Copyright 2025 | All Rights Reserved.</p>
-        <p>
-          Designed by <a href="https://gradixtech.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-semibold">Gradix Tech</a>
-        </p>
+        <div className="flex items-center gap-4">
+          <Link to="/admin" className="hover:text-primary transition-colors font-medium">Admin Portal</Link>
+          <span className="text-black/10">|</span>
+          <p>
+            Designed by <a href="https://gradixtech.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-semibold">Gradix Tech</a>
+          </p>
+        </div>
       </div>
     </footer>
   );

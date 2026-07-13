@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayCircle, X, Film } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
-const workshopVideos = [
+export const workshopVideos = [
   {
     id: 1,
     title: "Acting Workshop Highlights",
@@ -78,11 +79,22 @@ const workshopVideos = [
 ];
 
 const Workshops = () => {
+  const { workshops } = useData();
+  const activeWorkshops = workshops.filter(w => w.status === 'active').map(w => ({
+    id: w.id,
+    title: w.title,
+    description: w.description || 'Intensive acting school workshops training sessions.',
+    videoUrl: w.videoUrl,
+    thumbnail: w.thumbnail,
+    duration: w.duration,
+    category: w.category
+  }));
+
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [visibleCount, setVisibleCount] = useState(6);
 
   const handleLoadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 2, workshopVideos.length));
+    setVisibleCount(prev => Math.min(prev + 2, activeWorkshops.length));
   };
 
   return (
@@ -105,7 +117,7 @@ const Workshops = () => {
 
         {/* Video Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {workshopVideos.slice(0, visibleCount).map((video, index) => (
+          {activeWorkshops.slice(0, visibleCount).map((video, index) => (
             <motion.div
               key={video.id}
               initial={{ opacity: 0, y: 35 }}

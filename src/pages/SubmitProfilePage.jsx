@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle, ChevronDown, Compass } from 'lucide-react';
+import { useData } from '../admin/context/DataContext';
 
 const SubmitProfilePage = () => {
+  const { addArtistRegistration } = useData();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,6 +27,15 @@ const SubmitProfilePage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.phone) {
+      addArtistRegistration({
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        height: formData.height,
+        weight: formData.weight,
+        city: formData.location,
+        category: formData.preferred
+      });
       setIsSubmitted(true);
     }
   };

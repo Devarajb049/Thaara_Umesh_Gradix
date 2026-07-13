@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
-const Clients = () => {
-  const clients = [
+export const originalClients = [
     // Row 1
     { name: "Sudarshan", logo: "/images/clients/sudarshan.png" },
     { name: "K7 Security", logo: "/images/clients/k7security.png" },
@@ -113,8 +112,13 @@ const Clients = () => {
     { name: "RAKI", logo: "/images/clients/raki.png" },
     { name: "Whirlpool", logo: "/images/clients/whirlpool.png" },
     { name: "Swiggy", logo: "/images/clients/swiggy.png" }
-  ];
+];
 
+import { useData } from '../admin/context/DataContext';
+
+const Clients = () => {
+  const { clients } = useData();
+  const activeClients = clients.filter(c => c.status === 'active');
   const [failedImages, setFailedImages] = useState({});
 
   const handleImageError = (index) => {
@@ -133,21 +137,21 @@ const Clients = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 md:gap-6">
-          {clients.map((client, index) => (
+          {activeClients.map((client, index) => (
             <div
-              key={index}
+              key={client.id || index}
               data-aos="fade-up"
               data-aos-delay={(index % 8) * 50}
               className="group bg-white/85 rounded-2xl aspect-[4/3] flex items-center justify-center p-3 border border-black/5 shadow-sm hover:shadow-[0_10px_30px_rgba(155,11,22,0.1)] hover:border-primary/30 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-hidden"
             >
               {failedImages[index] ? (
                 <span className="text-dark/80 font-bold text-xs tracking-wider uppercase font-serif text-center px-1 leading-snug group-hover:text-primary transition-colors">
-                  {client.name}
+                  {client.clientName || client.name}
                 </span>
               ) : (
                 <img
                   src={client.logo}
-                  alt={client.name}
+                  alt={client.clientName || client.name}
                   onError={() => handleImageError(index)}
                   className="max-w-full max-h-12 object-contain grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                 />
