@@ -26,9 +26,9 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 border-r border-zinc-150/80 dark:border-zinc-900 transition-colors duration-300">
+    <div className="flex flex-col h-full bg-white border-r border-zinc-150 transition-colors duration-300">
       {/* Brand Header */}
-      <div className={`flex items-center justify-between px-6 py-5 border-b border-zinc-100 dark:border-zinc-900 flex-shrink-0`}>
+      <div className={`flex items-center justify-between px-6 py-5 border-b border-zinc-100 flex-shrink-0`}>
         <Link to="/admin" className="flex items-center gap-3 overflow-hidden select-none">
           <img 
             src="/images/Thaara_Umesh_Logo.png" 
@@ -37,7 +37,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
           />
           {!collapsed && (
             <div className="flex flex-col text-left">
-              <span className="font-serif font-black text-sm text-zinc-900 dark:text-zinc-100 tracking-wider">
+              <span className="font-serif font-black text-sm text-zinc-900 tracking-wider">
                 THAARA UMESH
               </span>
               <span className="text-[10px] text-zinc-450 font-bold uppercase tracking-widest leading-none">
@@ -59,8 +59,8 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
             className={({ isActive }) => `
               flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold select-none transition-all duration-200 group relative
               ${isActive 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25 dark:bg-rose-600 dark:shadow-rose-600/10' 
-                : 'text-zinc-550 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/60'
+                ? 'bg-primary text-white shadow-md shadow-primary/15 active' 
+                : 'text-zinc-550 hover:text-primary hover:bg-[#FCF8F8]'
               }
             `}
           >
@@ -69,7 +69,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
             
             {/* Tooltip on collapse */}
             {collapsed && (
-              <span className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-50 shadow-xl shadow-black/10">
+              <span className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-50 shadow-xl shadow-black/10">
                 {item.name}
               </span>
             )}
@@ -78,10 +78,10 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
       </nav>
 
       {/* Back to Website Footer */}
-      <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex-shrink-0">
+      <div className="p-4 border-t border-zinc-100 flex-shrink-0">
         <Link
           to="/"
-          className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-xs font-bold text-zinc-500 hover:text-primary dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-secondary/40 dark:hover:bg-zinc-900/50 transition-all select-none`}
+          className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-xs font-bold text-zinc-500 hover:text-primary hover:bg-[#FCF8F8] transition-all select-none`}
         >
           <ArrowLeft className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Main Website</span>}

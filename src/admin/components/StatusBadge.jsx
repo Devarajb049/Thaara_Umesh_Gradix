@@ -5,37 +5,37 @@ const StatusBadge = ({ status = '' }) => {
 
   const config = {
     active: {
-      bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+      bg: 'bg-primary/10 text-primary border-primary/20',
       label: 'Active'
     },
     inactive: {
-      bg: 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
+      bg: 'bg-zinc-100 text-zinc-500 border-zinc-150',
       label: 'Inactive'
     },
     approved: {
-      bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+      bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       label: 'Approved'
     },
     pending: {
-      bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+      bg: 'bg-amber-50 text-amber-700 border-amber-250',
       label: 'Pending'
     },
     rejected: {
-      bg: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
+      bg: 'bg-rose-50 text-rose-700 border-rose-200',
       label: 'Rejected'
     },
     unread: {
-      bg: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30 font-bold',
+      bg: 'bg-rose-50 text-rose-800 border-rose-200 font-bold',
       label: 'Unread'
     },
     read: {
-      bg: 'bg-zinc-100 text-zinc-500 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-500 dark:border-zinc-700',
+      bg: 'bg-zinc-100 text-zinc-450 border-zinc-150',
       label: 'Read'
     }
   };
 
   const current = config[normStatus] || {
-    bg: 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
+    bg: 'bg-zinc-100 text-zinc-500 border-zinc-150',
     label: status
   };
 

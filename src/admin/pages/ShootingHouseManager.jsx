@@ -382,8 +382,8 @@ const ShootingHouseManager = () => {
               onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs md:text-sm tracking-wide transition-all ${
                 isActive 
-                  ? 'border-primary text-primary dark:border-rose-500 dark:text-rose-500' 
-                  : 'border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
               }`}
             >
               {tab.icon}

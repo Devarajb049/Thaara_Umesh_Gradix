@@ -17,7 +17,7 @@ const AdminLayout = () => {
 
   return (
     <ToastProvider>
-      <div className="bg-secondary/20 text-zinc-800">
+      <div className="admin-panel min-h-screen text-zinc-800 bg-[#FCF8F8]">
         <div className="flex min-h-screen transition-colors duration-300">
           
           {/* Collapsible Sidebar */}

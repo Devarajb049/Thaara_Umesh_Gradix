@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #9b0b16; /* Deep red seen in the buttons/accents */
   --color-primary-dark: #7a0911;
@@ -8,6 +10,25 @@
   
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif; /* Or similar for the elegant headings */
+
+  /* Customize zinc colors inside Tailwind theme to enforce light theme throughout the admin panel */
+  --color-zinc-50: #FCF8F8;   /* Very Light Maroon Tint */
+  --color-zinc-100: #FCF8F8;  /* Very Light Maroon Tint */
+  --color-zinc-150: #E5E7EB;  /* Light Gray Border */
+  --color-zinc-200: #E5E7EB;  /* Light Gray Border */
+  --color-zinc-250: #E5E7EB;  /* Light Gray Border */
+  --color-zinc-300: #D1D5DB;  /* Light Gray Border */
+  --color-zinc-400: #9CA3AF;  /* Placeholders / Icons */
+  --color-zinc-450: #4B5563;  /* Dark Gray Secondary Text */
+  --color-zinc-500: #4B5563;  /* Dark Gray Secondary Text */
+  --color-zinc-550: #4B5563;  /* Dark Gray Secondary Text */
+  --color-zinc-600: #374151;  /* Dark Gray Secondary Text */
+  --color-zinc-650: #1F2937;  /* Dark Gray Secondary Text */
+  --color-zinc-700: #1F2937;  /* Dark Gray Secondary Text */
+  --color-zinc-800: #1a1a1a;  /* Primary Text - Black */
+  --color-zinc-850: #000000;  /* Primary Text - Black */
+  --color-zinc-900: #000000;  /* Primary Text - Black */
+  --color-zinc-950: #000000;  /* Primary Text - Black */
 }
 
 @layer base {
@@ -69,3 +90,191 @@ html.lenis, html.lenis body {
 .animate-clap {
   animation: clap 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
+/* Premium Admin Panel Light Theme Override */
+.admin-panel {
+  background-color: #FCF8F8 !important; /* Secondary Background: Very Light Maroon Tint */
+  color: #1a1a1a !important; /* Text: Primary - Black */
+}
+
+/* Ensure all cards, navbar, sidebar, tables have pure white backgrounds, light borders, and soft shadows */
+.admin-panel header,
+.admin-panel aside > div,
+.admin-panel .bg-white\/70,
+.admin-panel .bg-white\/90,
+.admin-panel .bg-white\/40,
+.admin-panel .bg-white {
+  background-color: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+}
+
+/* Card spacing, premium borders and shadows */
+.admin-panel .rounded-3xl,
+.admin-panel .rounded-\[2rem\] {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01) !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.admin-panel .rounded-3xl:hover,
+.admin-panel .rounded-\[2rem\]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.04), 0 4px 8px -2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Sidebar Styling */
+.admin-panel nav a {
+  color: #4B5563 !important; /* Secondary text - Dark Gray */
+  margin-bottom: 2px;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.admin-panel nav a svg {
+  color: #000000 !important; /* Black icons */
+  transition: color 0.2s ease-in-out !important;
+}
+
+.admin-panel nav a:hover {
+  background-color: #FCF8F8 !important; /* Soft Maroon tint */
+  color: #9b0b16 !important; /* Maroon hover text state */
+}
+
+.admin-panel nav a:hover svg {
+  color: #9b0b16 !important; /* Maroon hover icon state */
+}
+
+.admin-panel nav a.active,
+.admin-panel nav a.bg-primary {
+  background-color: #9b0b16 !important; /* Maroon active background */
+  color: #FFFFFF !important; /* White text */
+  box-shadow: 0 8px 16px -2px rgba(155, 11, 22, 0.15) !important;
+}
+
+.admin-panel nav a.active svg,
+.admin-panel nav a.bg-primary svg {
+  color: #FFFFFF !important; /* White icon on active */
+}
+
+/* Form Inputs and Labels */
+.admin-panel input[type="text"],
+.admin-panel input[type="number"],
+.admin-panel input[type="password"],
+.admin-panel input[type="email"],
+.admin-panel select,
+.admin-panel textarea {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important; /* Rounded inputs */
+  padding: 10px 14px !important; /* Clean spacing */
+  color: #000000 !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.admin-panel input[type="text"]:focus,
+.admin-panel input[type="number"]:focus,
+.admin-panel input[type="password"]:focus,
+.admin-panel input[type="email"]:focus,
+.admin-panel select:focus,
+.admin-panel textarea:focus {
+  border-color: #9b0b16 !important; /* Maroon focus border */
+  box-shadow: 0 0 0 2.5px rgba(155, 11, 22, 0.1) !important;
+  outline: none !important;
+}
+
+.admin-panel label {
+  color: #4B5563 !important; /* Secondary - Dark Gray */
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Secondary/Cancel Buttons - White background, Maroon border, Maroon text */
+.admin-panel button.border-zinc-200,
+.admin-panel button.border-zinc-250,
+.admin-panel button.border-zinc-150,
+.admin-panel button.border-zinc-800 {
+  background-color: #FFFFFF !important;
+  border: 1px solid #9b0b16 !important;
+  color: #9b0b16 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.admin-panel button.border-zinc-200:hover,
+.admin-panel button.border-zinc-250:hover,
+.admin-panel button.border-zinc-150:hover,
+.admin-panel button.border-zinc-800:hover {
+  background-color: #FCF8F8 !important; /* Soft Maroon tint */
+  color: #7a0911 !important;
+  border-color: #7a0911 !important;
+}
+
+/* Tables styling */
+.admin-panel table {
+  background-color: #FFFFFF !important;
+  border-collapse: collapse !important;
+}
+
+.admin-panel thead tr {
+  background-color: #FCF8F8 !important; /* Very light maroon tint */
+  border-bottom: 2px solid #9b0b16 !important; /* Maroon header accent border */
+}
+
+.admin-panel thead th {
+  color: #9b0b16 !important; /* Maroon header accent text */
+  font-weight: 700 !important;
+  padding: 16px !important;
+}
+
+.admin-panel tbody tr {
+  border-bottom: 1px solid #E5E7EB !important;
+  transition: background-color 0.2s ease-in-out !important;
+}
+
+/* Subtle zebra row striping */
+.admin-panel tbody tr:nth-child(even) {
+  background-color: #FCF8F8/50 !important; /* very light maroon tint */
+}
+
+.admin-panel tbody tr:nth-child(even) {
+  background-color: #FCF8F8 !important;
+}
+
+.admin-panel tbody tr:nth-child(odd) {
+  background-color: #FFFFFF !important;
+}
+
+.admin-panel tbody tr:hover {
+  background-color: #FAF1F1 !important; /* Soft Maroon tint hover state */
+}
+
+.admin-panel tbody td {
+  padding: 16px !important;
+  color: #000000 !important; /* Primary - Black */
+}
+
+/* Checkbox alignment & accent color */
+.admin-panel input[type="checkbox"] {
+  accent-color: #9b0b16 !important;
+}
+
+/* Scrollbars */
+.admin-panel .custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-panel .custom-scrollbar::-webkit-scrollbar-track {
+  background: #FCF8F8;
+}
+
+.admin-panel .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 4px;
+}
+
+.admin-panel .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+
