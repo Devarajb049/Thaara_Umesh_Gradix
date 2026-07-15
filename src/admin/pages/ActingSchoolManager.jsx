@@ -1,103 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Edit, 
   Trash2, 
-  Eye, 
   ArrowUp, 
   ArrowDown, 
-  Calendar,
-  Image as ImageIcon,
+  MessageSquare,
   Tv,
-  MessageSquare
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
-import { mockTestimonials, mockWorkshops, mockEvents } from '../dummyData';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import DataTable from '../components/DataTable';
-import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import ImageUpload from '../components/ImageUpload';
-import VideoPreview from '../components/VideoPreview';
 import DeleteConfirmation from '../components/DeleteConfirmation';
-import SearchBar from '../components/SearchBar';
 
 const ActingSchoolManager = () => {
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('testimonials'); // 'testimonials' | 'workshops' | 'ignite'
 
-  // Datasets state
+  // Context APIs
   const { 
-    testimonials, setTestimonials, 
-    workshops, setWorkshops, 
-    events, setEvents 
+    testimonials, addTestimonialRecord, updateTestimonialRecord, deleteTestimonialRecord,
+    workshops, addWorkshopRecord, updateWorkshopRecord, deleteWorkshopRecord,
+    igniteImages, addIgniteImageRecord, deleteIgniteImageRecord,
+    loading 
   } = useData();
-  const [loading, setLoading] = useState(false);
 
-  // Search
-  const [searchTerm, setSearchTerm] = useState('');
+  // Selection
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Modals & Target items
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { type, id }
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [currentItem, setCurrentItem] = useState(null);
-  const [activeVideo, setActiveVideo] = useState(null);
-  const [activeGallery, setActiveGallery] = useState(null); // Array of image URLs for preview
+  const [activeVideoUrl, setActiveVideoUrl] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
-  // Form Fields - Unified state, mapped depending on tab
+  // Form Fields - Unified state, fields change depending on tab
   const [formData, setFormData] = useState({});
   const [formErrors, setFormErrors] = useState({});
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
-
-  // Reset search when switching tabs
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    setSearchTerm('');
+    setSelectedIds([]);
+    setCurrentPage(1);
   };
 
-  // Reordering display lists
-  const handleMoveOrder = (listType, index, direction) => {
-    let list, setList;
-    if (listType === 'testimonials') { list = testimonials; setList = setTestimonials; }
-    else if (listType === 'workshops') { list = workshops; setList = setWorkshops; }
-    else { list = events; setList = setEvents; }
+  // Reorder display list (testimonials / workshops)
+  const handleMoveOrder = async (index, direction) => {
+    if (activeTab === 'testimonials') {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= testimonials.length) return;
 
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= list.length) return;
+      const currentT = testimonials[index];
+      const targetT = testimonials[targetIndex];
 
-    const updated = [...list];
-    const tempOrder = updated[index].displayOrder;
-    updated[index].displayOrder = updated[targetIndex].displayOrder;
-    updated[targetIndex].displayOrder = tempOrder;
+      const tempOrder = currentT.displayOrder;
+      
+      const success1 = await updateTestimonialRecord(currentT.id, { ...currentT, displayOrder: targetT.displayOrder });
+      const success2 = await updateTestimonialRecord(targetT.id, { ...targetT, displayOrder: tempOrder });
 
-    updated.sort((a, b) => a.displayOrder - b.displayOrder);
-    setList(updated);
-    addToast("Order rearranged successfully", "success");
-  };
+      if (success1 && success2) {
+        addToast("Testimonial order changed", "success");
+      } else {
+        addToast("Failed to rearrange order", "error");
+      }
+    } else if (activeTab === 'workshops') {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= workshops.length) return;
 
-  // Delete Triggers
-  const triggerDelete = (type, id) => {
-    setDeleteTarget({ type, id });
-    setIsDeleteOpen(true);
-  };
+      const currentW = workshops[index];
+      const targetW = workshops[targetIndex];
 
-  const handleConfirmDelete = () => {
-    if (!deleteTarget) return;
-    const { type, id } = deleteTarget;
-    if (type === 'testimonial') {
-      setTestimonials(prev => prev.filter(t => t.id !== id));
-    } else if (type === 'workshop') {
-      setWorkshops(prev => prev.filter(w => w.id !== id));
-    } else if (type === 'event') {
-      setEvents(prev => prev.filter(e => e.id !== id));
+      const tempOrder = currentW.displayOrder;
+      
+      const success1 = await updateWorkshopRecord(currentW.id, { ...currentW, displayOrder: targetW.displayOrder });
+      const success2 = await updateWorkshopRecord(targetW.id, { ...targetW, displayOrder: tempOrder });
+
+      if (success1 && success2) {
+        addToast("Workshop video order changed", "success");
+      } else {
+        addToast("Failed to rearrange order", "error");
+      }
     }
-    addToast("Item removed successfully", "success");
   };
 
-  // Modal Openers
+  // Open Form modal
   const openCreateModal = () => {
     setFormErrors({});
     setCurrentItem(null);
@@ -108,29 +104,18 @@ const ActingSchoolManager = () => {
         designation: '',
         photo: '',
         review: '',
-        displayOrder: testimonials.length > 0 ? Math.max(...testimonials.map(t => t.displayOrder)) + 1 : 1,
-        status: 'active'
+        displayOrder: testimonials.length > 0 ? Math.max(...testimonials.map(t => t.displayOrder || 0)) + 1 : 1
       });
     } else if (activeTab === 'workshops') {
       setFormData({
-        title: '',
-        description: '',
         thumbnail: '',
-        youtubeUrl: '',
-        duration: '',
-        category: 'Workshop',
-        displayOrder: workshops.length > 0 ? Math.max(...workshops.map(w => w.displayOrder)) + 1 : 1,
-        status: 'active'
+        videoUrl: '',
+        displayOrder: workshops.length > 0 ? Math.max(...workshops.map(w => w.displayOrder || 0)) + 1 : 1
       });
     } else {
+      // Ignite Graduation Day Tab just uploads images immediately
       setFormData({
-        eventTitle: '',
-        description: '',
-        eventDate: '',
-        eventCoverImage: '',
-        galleryImages: [],
-        displayOrder: events.length > 0 ? Math.max(...events.map(e => e.displayOrder)) + 1 : 1,
-        status: 'active'
+        images: []
       });
     }
 
@@ -147,355 +132,308 @@ const ActingSchoolManager = () => {
         designation: item.designation,
         photo: item.photo || '',
         review: item.review,
-        displayOrder: item.displayOrder,
-        status: item.status
+        displayOrder: item.displayOrder
       });
     } else if (activeTab === 'workshops') {
       setFormData({
-        title: item.title,
-        description: item.description,
         thumbnail: item.thumbnail || '',
-        youtubeUrl: item.youtubeUrl || '',
-        duration: item.duration || '',
-        category: item.category || 'Workshop',
-        displayOrder: item.displayOrder,
-        status: item.status
-      });
-    } else {
-      setFormData({
-        eventTitle: item.eventTitle,
-        description: item.description,
-        eventDate: item.eventDate || '',
-        eventCoverImage: item.eventCoverImage || '',
-        galleryImages: item.galleryImages ? [...item.galleryImages] : [],
-        displayOrder: item.displayOrder,
-        status: item.status
+        videoUrl: item.videoUrl,
+        displayOrder: item.displayOrder
       });
     }
 
     setIsFormOpen(true);
   };
 
-  // Validations
+  // Validate form
   const validateForm = () => {
     const errors = {};
     if (activeTab === 'testimonials') {
-      if (!formData.personName?.trim()) errors.personName = "Name is required";
-      if (!formData.review?.trim()) errors.review = "Review is required";
-      if (!formData.photo) errors.photo = "Photo is required";
+      if (!formData.personName.trim()) errors.personName = "Person Name is required";
+      if (!formData.review.trim()) errors.review = "Review is required";
+      if (!formData.photo) errors.photo = "Profile image is required";
     } else if (activeTab === 'workshops') {
-      if (!formData.title?.trim()) errors.title = "Title is required";
-      if (!formData.youtubeUrl?.trim()) {
-        errors.youtubeUrl = "YouTube URL is required";
-      } else if (!formData.youtubeUrl.includes('youtube.com') && !formData.youtubeUrl.includes('youtu.be')) {
-        errors.youtubeUrl = "Invalid YouTube format";
-      }
+      if (!formData.videoUrl.trim()) errors.videoUrl = "YouTube URL is required";
     } else {
-      if (!formData.eventTitle?.trim()) errors.eventTitle = "Event Title is required";
-      if (!formData.eventDate) errors.eventDate = "Event Date is required";
-      if (!formData.eventCoverImage) errors.eventCoverImage = "Cover Image is required";
+      if (formData.images.length === 0) errors.images = "At least one image is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Save changes
-  const handleSave = (e) => {
+  // Save Record
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (activeTab !== 'ignite' && !validateForm()) return;
 
     if (activeTab === 'testimonials') {
       if (currentItem) {
-        setTestimonials(prev => prev.map(t => t.id === currentItem.id ? { ...t, ...formData } : t));
-        addToast("Testimonial updated", "success");
+        const success = await updateTestimonialRecord(currentItem.id, formData);
+        if (success) addToast("Testimonial updated successfully", "success");
+        else addToast("Failed to update testimonial", "error");
       } else {
-        const item = { id: `t_${Math.random().toString(36).substring(2, 9)}`, ...formData };
-        setTestimonials(prev => [...prev, item].sort((a, b) => a.displayOrder - b.displayOrder));
-        addToast("Testimonial created", "success");
+        const success = await addTestimonialRecord(formData);
+        if (success) addToast("Testimonial added successfully", "success");
+        else addToast("Failed to add testimonial", "error");
       }
     } else if (activeTab === 'workshops') {
       if (currentItem) {
-        setWorkshops(prev => prev.map(w => w.id === currentItem.id ? { ...w, ...formData } : w));
-        addToast("Workshop video updated", "success");
+        const success = await updateWorkshopRecord(currentItem.id, formData);
+        if (success) addToast("Workshop video updated successfully", "success");
+        else addToast("Failed to update workshop video", "error");
       } else {
-        const item = { id: `w_${Math.random().toString(36).substring(2, 9)}`, ...formData };
-        setWorkshops(prev => [...prev, item].sort((a, b) => a.displayOrder - b.displayOrder));
-        addToast("Workshop video created", "success");
+        const success = await addWorkshopRecord(formData);
+        if (success) addToast("Workshop video added successfully", "success");
+        else addToast("Failed to add workshop video", "error");
       }
     } else {
-      if (currentItem) {
-        setEvents(prev => prev.map(ev => ev.id === currentItem.id ? { ...ev, ...formData } : ev));
-        addToast("Ignite Event updated", "success");
-      } else {
-        const item = { id: `e_${Math.random().toString(36).substring(2, 9)}`, ...formData };
-        setEvents(prev => [...prev, item].sort((a, b) => a.displayOrder - b.displayOrder));
-        addToast("Ignite Event created", "success");
+      // Ignite: Save multiple uploaded images
+      let successCount = 0;
+      let startOrder = igniteImages.length > 0 ? Math.max(...igniteImages.map(img => img.display_order || 0)) + 1 : 1;
+      for (const url of formData.images) {
+        const success = await addIgniteImageRecord(url, startOrder++);
+        if (success) successCount++;
       }
+      addToast(`Added ${successCount} graduation image(s)`, "success");
     }
+
     setIsFormOpen(false);
   };
 
-  // Testimonials Tab list columns
-  const testimonialColumns = [
-    {
-      key: 'photo',
-      label: 'Photo',
-      render: (item) => (
-        <img src={item.photo} alt={item.personName} className="w-10 h-10 rounded-full object-cover border" />
-      )
-    },
-    { key: 'personName', label: 'Name' },
-    { key: 'designation', label: 'Designation' },
-    {
-      key: 'review',
-      label: 'Review text',
-      render: (item) => <p className="line-clamp-2 max-w-xs text-xs text-zinc-550">{item.review}</p>
-    },
-    {
-      key: 'displayOrder',
-      label: 'Display Order',
-      render: (item, idx) => (
-        <div className="flex items-center gap-1 font-semibold">
-          <span className="w-6">{item.displayOrder}</span>
-          <div className="flex flex-col">
-            <button 
-              disabled={testimonials.findIndex(t => t.id === item.id) === 0}
-              onClick={() => handleMoveOrder('testimonials', testimonials.findIndex(t => t.id === item.id), -1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              disabled={testimonials.findIndex(t => t.id === item.id) === testimonials.length - 1}
-              onClick={() => handleMoveOrder('testimonials', testimonials.findIndex(t => t.id === item.id), 1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (item) => (
-        <button
-          onClick={() => {
-            const next = item.status === 'active' ? 'inactive' : 'active';
-            setTestimonials(prev => prev.map(t => t.id === item.id ? { ...t, status: next } : t));
-            addToast(`Testimonial status updated`, "info");
-          }}
-        >
-          <StatusBadge status={item.status} />
-        </button>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (item) => (
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => openEditModal(item)} className="p-2 rounded-xl text-zinc-500 hover:text-indigo-650 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button onClick={() => triggerDelete('testimonial', item.id)} className="p-2 rounded-xl text-zinc-500 hover:text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  // Workshops Columns
-  const workshopColumns = [
-    {
-      key: 'thumbnail',
-      label: 'Thumbnail',
-      render: (item) => (
-        <div className="w-20 aspect-video rounded-lg overflow-hidden border relative group bg-black">
-          <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
-          <button 
-            onClick={() => setActiveVideo({ url: item.youtubeUrl, title: item.title })}
-            className="absolute inset-0 flex items-center justify-center text-white bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    },
-    { key: 'title', label: 'Title' },
-    { key: 'category', label: 'Category' },
-    { key: 'duration', label: 'Duration' },
-    {
-      key: 'displayOrder',
-      label: 'Order',
-      render: (item, idx) => (
-        <div className="flex items-center gap-1 font-semibold">
-          <span className="w-6">{item.displayOrder}</span>
-          <div className="flex flex-col">
-            <button 
-              disabled={workshops.findIndex(w => w.id === item.id) === 0}
-              onClick={() => handleMoveOrder('workshops', workshops.findIndex(w => w.id === item.id), -1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              disabled={workshops.findIndex(w => w.id === item.id) === workshops.length - 1}
-              onClick={() => handleMoveOrder('workshops', workshops.findIndex(w => w.id === item.id), 1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (item) => (
-        <button
-          onClick={() => {
-            const next = item.status === 'active' ? 'inactive' : 'active';
-            setWorkshops(prev => prev.map(w => w.id === item.id ? { ...w, status: next } : w));
-            addToast(`Workshop status updated`, "info");
-          }}
-        >
-          <StatusBadge status={item.status} />
-        </button>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (item) => (
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => openEditModal(item)} className="p-2 rounded-xl text-zinc-500 hover:text-indigo-650 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button onClick={() => triggerDelete('workshop', item.id)} className="p-2 rounded-xl text-zinc-500 hover:text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  // Events Columns
-  const eventColumns = [
-    {
-      key: 'eventCoverImage',
-      label: 'Cover',
-      render: (item) => (
-        <img src={item.eventCoverImage} alt={item.eventTitle} className="w-16 aspect-[4/3] rounded-lg object-cover border bg-zinc-50" />
-      )
-    },
-    { key: 'eventTitle', label: 'Event Title' },
-    {
-      key: 'eventDate',
-      label: 'Event Date',
-      render: (item) => (
-        <span className="flex items-center gap-1.5 text-zinc-500">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>{new Date(item.eventDate).toLocaleDateString()}</span>
-        </span>
-      )
-    },
-    {
-      key: 'galleryImages',
-      label: 'Gallery Preview',
-      render: (item) => (
-        <button
-          onClick={() => setActiveGallery(item.galleryImages)}
-          className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-rose-450 hover:underline font-semibold"
-        >
-          <ImageIcon className="w-4 h-4" />
-          <span>{item.galleryImages?.length || 0} Images</span>
-        </button>
-      )
-    },
-    {
-      key: 'displayOrder',
-      label: 'Order',
-      render: (item, idx) => (
-        <div className="flex items-center gap-1 font-semibold">
-          <span className="w-6">{item.displayOrder}</span>
-          <div className="flex flex-col">
-            <button 
-              disabled={events.findIndex(e => e.id === item.id) === 0}
-              onClick={() => handleMoveOrder('events', events.findIndex(e => e.id === item.id), -1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              disabled={events.findIndex(e => e.id === item.id) === events.length - 1}
-              onClick={() => handleMoveOrder('events', events.findIndex(e => e.id === item.id), 1)}
-              className="p-0.5 hover:text-primary disabled:opacity-30"
-            >
-              <ArrowDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (item) => (
-        <button
-          onClick={() => {
-            const next = item.status === 'active' ? 'inactive' : 'active';
-            setEvents(prev => prev.map(ev => ev.id === item.id ? { ...ev, status: next } : ev));
-            addToast(`Event status updated`, "info");
-          }}
-        >
-          <StatusBadge status={item.status} />
-        </button>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (item) => (
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => openEditModal(item)} className="p-2 rounded-xl text-zinc-500 hover:text-indigo-650 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button onClick={() => triggerDelete('event', item.id)} className="p-2 rounded-xl text-zinc-500 hover:text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  // Helper lists depending on current active tab
-  const getTabLabel = () => {
-    if (activeTab === 'testimonials') return 'Testimonial';
-    if (activeTab === 'workshops') return 'Workshop Video';
-    return 'Ignite Event';
+  // Delete Actions
+  const triggerDelete = (id) => {
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
   };
 
-  const getListData = () => {
-    let currentList = [];
-    if (activeTab === 'testimonials') currentList = testimonials;
-    else if (activeTab === 'workshops') currentList = workshops;
-    else currentList = events;
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
 
-    if (!searchTerm) return currentList;
-    
-    return currentList.filter(item => {
-      const name = item.personName || item.title || item.eventTitle || '';
-      const desc = item.review || item.description || '';
-      return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-             desc.toLowerCase().includes(searchTerm.toLowerCase());
-    });
+    if (activeTab === 'testimonials') {
+      const success = await deleteTestimonialRecord(deleteTargetId);
+      if (success) addToast("Testimonial deleted", "success");
+      else addToast("Failed to delete testimonial", "error");
+    } else if (activeTab === 'workshops') {
+      const success = await deleteWorkshopRecord(deleteTargetId);
+      if (success) addToast("Workshop video deleted", "success");
+      else addToast("Failed to delete workshop video", "error");
+    } else {
+      const success = await deleteIgniteImageRecord(deleteTargetId);
+      if (success) addToast("Graduation photo deleted", "success");
+      else addToast("Failed to delete graduation photo", "error");
+    }
+
+    setIsDeleteOpen(false);
   };
 
-  const activeItems = getListData();
+  // Pagination calculation
+  const getActiveList = () => {
+    if (activeTab === 'testimonials') return testimonials;
+    if (activeTab === 'workshops') return workshops;
+    return igniteImages;
+  };
+
+  const activeList = getActiveList();
+  const totalPages = Math.ceil(activeList.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = activeList.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Columns definition dynamically by tab
+  const getColumns = () => {
+    if (activeTab === 'testimonials') {
+      return [
+        {
+          key: 'photo',
+          label: 'Photo',
+          render: (item) => (
+            <div 
+              onClick={() => setPreviewImage(item.photo)}
+              className="w-10 h-10 rounded-full overflow-hidden border border-zinc-200 bg-zinc-100 cursor-zoom-in flex-shrink-0"
+            >
+              <img src={item.photo} alt={item.personName} className="w-full h-full object-cover" />
+            </div>
+          )
+        },
+        { key: 'personName', label: 'Person Name', sortable: true },
+        { key: 'designation', label: 'Designation' },
+        { 
+          key: 'review', 
+          label: 'Review text', 
+          render: (item) => (
+            <p className="max-w-xs truncate text-xs text-zinc-500 italic">
+              "{item.review}"
+            </p>
+          )
+        },
+        {
+          key: 'displayOrder',
+          label: 'Display Order',
+          sortable: true,
+          render: (item) => {
+            const actualIdx = testimonials.findIndex(t => t.id === item.id);
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold w-6">{item.displayOrder}</span>
+                <div className="flex flex-col">
+                  <button 
+                    disabled={actualIdx === 0}
+                    onClick={() => handleMoveOrder(actualIdx, -1)}
+                    className="p-0.5 hover:text-primary disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    disabled={actualIdx === testimonials.length - 1}
+                    onClick={() => handleMoveOrder(actualIdx, 1)}
+                    className="p-0.5 hover:text-primary disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        },
+        {
+          key: 'actions',
+          label: 'Actions',
+          render: (item) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openEditModal(item)}
+                className="p-2 rounded-xl text-zinc-450 hover:text-indigo-650 hover:bg-indigo-50 transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerDelete(item.id)}
+                className="p-2 rounded-xl text-zinc-450 hover:text-rose-650 hover:bg-rose-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+      ];
+    } else if (activeTab === 'workshops') {
+      return [
+        {
+          key: 'thumbnail',
+          label: 'Thumbnail',
+          render: (item) => (
+            <div 
+              onClick={() => setActiveVideoUrl(item.videoUrl)}
+              className="w-16 aspect-video rounded-lg overflow-hidden border border-zinc-150 bg-black cursor-pointer hover:opacity-85 flex items-center justify-center"
+            >
+              {item.thumbnail ? (
+                <img src={item.thumbnail} alt="Workshop" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[10px] text-white">Play</span>
+              )}
+            </div>
+          )
+        },
+        {
+          key: 'videoUrl',
+          label: 'Video Link',
+          render: (item) => (
+            <a href={item.videoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline font-semibold truncate max-w-xs block">
+              {item.videoUrl}
+            </a>
+          )
+        },
+        {
+          key: 'displayOrder',
+          label: 'Display Order',
+          sortable: true,
+          render: (item) => {
+            const actualIdx = workshops.findIndex(w => w.id === item.id);
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold w-6">{item.displayOrder}</span>
+                <div className="flex flex-col">
+                  <button 
+                    disabled={actualIdx === 0}
+                    onClick={() => handleMoveOrder(actualIdx, -1)}
+                    className="p-0.5 hover:text-primary disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    disabled={actualIdx === workshops.length - 1}
+                    onClick={() => handleMoveOrder(actualIdx, 1)}
+                    className="p-0.5 hover:text-primary disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        },
+        {
+          key: 'actions',
+          label: 'Actions',
+          render: (item) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openEditModal(item)}
+                className="p-2 rounded-xl text-zinc-450 hover:text-indigo-650 hover:bg-indigo-50 transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerDelete(item.id)}
+                className="p-2 rounded-xl text-zinc-450 hover:text-rose-650 hover:bg-rose-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+      ];
+    } else {
+      // Ignite graduation images
+      return [
+        {
+          key: 'image_url',
+          label: 'Photo',
+          render: (item) => (
+            <div 
+              onClick={() => setPreviewImage(item.image_url)}
+              className="w-16 aspect-[4/3] rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 cursor-zoom-in flex items-center justify-center p-0.5"
+            >
+              <img src={item.image_url} alt="Graduation" className="w-full h-full object-cover" />
+            </div>
+          )
+        },
+        {
+          key: 'image_url_text',
+          label: 'File Path',
+          render: (item) => (
+            <span className="text-xs text-zinc-500 font-mono select-all truncate max-w-sm block">
+              {item.image_url}
+            </span>
+          )
+        },
+        {
+          key: 'actions',
+          label: 'Actions',
+          render: (item) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => triggerDelete(item.id)}
+                className="p-2 rounded-xl text-zinc-450 hover:text-rose-650 hover:bg-rose-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+      ];
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -503,10 +441,10 @@ const ActingSchoolManager = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
         <div className="flex flex-col text-left">
           <h1 className="text-2xl md:text-3xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-            Acting School Management
+            Acting School Manager
           </h1>
           <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400">
-            Dynamically adjust course testimonials, student portfolio highlights, and graduation day memories.
+            Manage course reviews, student workshop videos, and Ignite Graduation day photos.
           </p>
         </div>
 
@@ -515,316 +453,243 @@ const ActingSchoolManager = () => {
           className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-primary text-white font-semibold text-sm hover:bg-primary-dark shadow-lg shadow-primary/15 transition-all self-start sm:self-center active:scale-98"
         >
           <Plus className="w-4.5 h-4.5" />
-          <span>Add {getTabLabel()}</span>
+          <span>{activeTab === 'testimonials' ? 'Add Review' : activeTab === 'workshops' ? 'Add Video' : 'Add Image(s)'}</span>
         </button>
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-zinc-250/80 dark:border-zinc-900 select-none pb-0.5">
-        {[
-          { id: 'testimonials', label: 'Testimonials', icon: <MessageSquare className="w-4.5 h-4.5" /> },
-          { id: 'workshops', label: 'Workshops & Student Reels', icon: <Tv className="w-4.5 h-4.5" /> },
-          { id: 'ignite', label: 'Ignite Graduation Events', icon: <Calendar className="w-4.5 h-4.5" /> }
-        ].map(tab => {
-          const isActive = tab.id === activeTab;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs md:text-sm tracking-wide transition-all ${
-                isActive 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search Toolbar */}
-      <div className="flex items-center bg-white/40 dark:bg-zinc-900/10 border border-zinc-150/80 dark:border-zinc-805/40 p-4 rounded-3xl backdrop-blur-md">
-        <SearchBar 
-          value={searchTerm} 
-          onChange={setSearchTerm} 
-          placeholder={`Search ${activeTab}...`} 
-        />
-      </div>
-
-      {/* Dynamic Data Table */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
+      <div className="flex border-b border-zinc-150 dark:border-zinc-800 select-none bg-white/40 dark:bg-zinc-900/10 p-1.5 rounded-3xl w-max">
+        <button
+          onClick={() => handleTabChange('testimonials')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+            activeTab === 'testimonials' 
+              ? 'bg-white dark:bg-zinc-800 text-primary shadow-xs border border-zinc-100 dark:border-zinc-750' 
+              : 'text-zinc-500 hover:text-zinc-800'
+          }`}
         >
-          {activeTab === 'testimonials' && (
-            <DataTable
-              columns={testimonialColumns}
-              data={activeItems}
-              loading={loading}
-              pagination={{ currentPage: 1, totalPages: 1 }}
-              emptyStateReset={() => setSearchTerm('')}
-            />
-          )}
+          <MessageSquare className="w-4 h-4" />
+          <span>Testimonials</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('workshops')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+            activeTab === 'workshops' 
+              ? 'bg-white dark:bg-zinc-800 text-primary shadow-xs border border-zinc-100 dark:border-zinc-750' 
+              : 'text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <Tv className="w-4 h-4" />
+          <span>Workshops</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('ignite')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+            activeTab === 'ignite' 
+              ? 'bg-white dark:bg-zinc-800 text-primary shadow-xs border border-zinc-100 dark:border-zinc-750' 
+              : 'text-zinc-500 hover:text-zinc-800'
+          }`}
+        >
+          <ImageIcon className="w-4 h-4" />
+          <span>Ignite Graduation</span>
+        </button>
+      </div>
 
-          {activeTab === 'workshops' && (
-            <DataTable
-              columns={workshopColumns}
-              data={activeItems}
-              loading={loading}
-              pagination={{ currentPage: 1, totalPages: 1 }}
-              emptyStateReset={() => setSearchTerm('')}
-            />
-          )}
+      {/* Main List Grid */}
+      <DataTable
+        columns={getColumns()}
+        data={currentItems}
+        loading={loading}
+        selectedIds={selectedIds}
+        onSelectRow={(id, checked) => {
+          if (checked) setSelectedIds(prev => [...prev, id]);
+          else setSelectedIds(prev => prev.filter(item => item !== id));
+        }}
+        onSelectAll={(checked) => {
+          if (checked) setSelectedIds(activeList.map(item => item.id));
+          else setSelectedIds([]);
+        }}
+        onBulkDelete={async () => {
+          if (confirm(`Are you sure you want to delete ${selectedIds.length} selected items?`)) {
+            let successCount = 0;
+            for (const id of selectedIds) {
+              let success = false;
+              if (activeTab === 'testimonials') success = await deleteTestimonialRecord(id);
+              else if (activeTab === 'workshops') success = await deleteWorkshopRecord(id);
+              else success = await deleteIgniteImageRecord(id);
+              if (success) successCount++;
+            }
+            setSelectedIds([]);
+            addToast(`Successfully deleted ${successCount} item(s)`, "success");
+          }
+        }}
+        allIds={activeList.map(item => item.id)}
+        pagination={{
+          currentPage,
+          totalPages,
+          onPageChange: setCurrentPage
+        }}
+        emptyStateReset={() => {
+          setCurrentPage(1);
+        }}
+      />
 
-          {activeTab === 'ignite' && (
-            <DataTable
-              columns={eventColumns}
-              data={activeItems}
-              loading={loading}
-              pagination={{ currentPage: 1, totalPages: 1 }}
-              emptyStateReset={() => setSearchTerm('')}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* FORM DIALOG */}
+      {/* FORM MODAL */}
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={currentItem ? `Edit ${getTabLabel()}` : `Add New ${getTabLabel()}`}
-        size="lg"
+        title={
+          activeTab === 'testimonials' 
+            ? (currentItem ? "Edit Testimonial" : "Add Testimonial")
+            : activeTab === 'workshops'
+            ? (currentItem ? "Edit Workshop Video" : "Add Workshop Video")
+            : "Upload Graduation Images"
+        }
       >
         <form onSubmit={handleSave} className="flex flex-col gap-5 text-left">
           
-          {/* TAB 1: TESTIMONIAL FORM FIELDS */}
+          {/* Testimonial Form Fields */}
           {activeTab === 'testimonials' && (
             <>
               {/* Person Name */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Person Name *</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Person Name *
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Madhavan K."
+                  placeholder="e.g. Delhi Ganesh"
                   value={formData.personName || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, personName: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1"
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200"
                 />
               </div>
 
               {/* Designation */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Designation / Batch</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Designation / Role
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Alumni / Actor"
+                  placeholder="e.g. Actor, Alumni, Model"
                   value={formData.designation || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1"
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200"
                 />
               </div>
 
-              {/* Photo */}
+              {/* Profile Image upload */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Profile Photo *</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Profile Photo *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Paste direct profile photo URL (e.g. https://...)"
+                  value={formData.photo || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, photo: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200 mb-1"
+                />
+                <span className="text-[10px] text-zinc-400 font-semibold mb-1">OR UPLOAD LOCAL FILE:</span>
                 <ImageUpload
-                  images={formData.photo ? [formData.photo] : []}
+                  folder="testimonials"
+                  images={formData.photo && !formData.photo.startsWith('http') ? [formData.photo] : []}
                   onChange={(urls) => setFormData(prev => ({ ...prev, photo: urls[0] || '' }))}
                 />
-                {formErrors.photo && <span className="text-xs text-rose-500 font-semibold">{formErrors.photo}</span>}
               </div>
 
               {/* Review Text */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Review / Feedback Description *</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Review Text *
+                </label>
                 <textarea
                   required
                   rows="4"
-                  placeholder="Insert acting school feedback or course review notes..."
+                  placeholder="Paste the student's review here..."
                   value={formData.review || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, review: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1"
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200 resize-y"
                 />
               </div>
             </>
           )}
 
-          {/* TAB 2: WORKSHOP / REEL FORM FIELDS */}
+          {/* Workshop Form Fields */}
           {activeTab === 'workshops' && (
             <>
-              {/* Title */}
+              {/* YouTube Link */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Video Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Dialogue Delivery Masterclass"
-                  value={formData.title || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
-                />
-              </div>
-
-              {/* YouTube Video URL */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">YouTube URL *</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  YouTube Video URL *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="https://www.youtube.com/watch?v=..."
-                  value={formData.youtubeUrl || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
+                  value={formData.videoUrl || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200"
                 />
-                {formErrors.youtubeUrl && <span className="text-xs text-rose-500 font-semibold">{formErrors.youtubeUrl}</span>}
               </div>
 
-              {/* Workshop Duration */}
+              {/* Thumbnail Image upload */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Duration / Length</label>
+                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Video Thumbnail Image (Optional)
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. 2 Weeks, 45 mins"
-                  value={formData.duration || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
+                  placeholder="Paste direct thumbnail image URL (e.g. https://...)"
+                  value={formData.thumbnail || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200 mb-1"
                 />
-              </div>
-
-              {/* Category */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Reel Category</label>
-                <select
-                  value={formData.category || 'Workshop'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm"
-                >
-                  <option value="Workshop">Workshop</option>
-                  <option value="Student Testimonial">Student Testimonial</option>
-                </select>
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Short Description</label>
-                <textarea
-                  rows="3"
-                  placeholder="Summarize course takeaways or video context details..."
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
-                />
-              </div>
-
-              {/* Thumbnail Image */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Custom Thumbnail Image</label>
+                <span className="text-[10px] text-zinc-400 font-semibold mb-1">OR UPLOAD LOCAL FILE:</span>
                 <ImageUpload
-                  images={formData.thumbnail ? [formData.thumbnail] : []}
+                  folder="workshops"
+                  images={formData.thumbnail && !formData.thumbnail.startsWith('http') ? [formData.thumbnail] : []}
                   onChange={(urls) => setFormData(prev => ({ ...prev, thumbnail: urls[0] || '' }))}
                 />
               </div>
             </>
           )}
 
-          {/* TAB 3: IGNITE EVENT FORM FIELDS */}
+          {/* Ignite Images Tab upload */}
           {activeTab === 'ignite' && (
-            <>
-              {/* Event Title */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Event Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Ignite Graduation Day 2026"
-                  value={formData.eventTitle || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, eventTitle: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm"
-                />
-              </div>
-
-              {/* Event Date */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Event Date *</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.eventDate || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, eventDate: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Event Summary Description</label>
-                <textarea
-                  rows="3"
-                  placeholder="Detail the event activities, student milestones, or chief guest lists..."
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm"
-                />
-              </div>
-
-              {/* Cover Image */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Cover Image *</label>
-                <ImageUpload
-                  images={formData.eventCoverImage ? [formData.eventCoverImage] : []}
-                  onChange={(urls) => setFormData(prev => ({ ...prev, eventCoverImage: urls[0] || '' }))}
-                />
-                {formErrors.eventCoverImage && <span className="text-xs text-rose-500 font-semibold">{formErrors.eventCoverImage}</span>}
-              </div>
-
-              {/* Gallery Images (MULTIPLE UPLOAD & REORDERING) */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Event Gallery Images (Upload Multiple, click arrows to adjust layout order)
-                </label>
-                <ImageUpload
-                  multiple={true}
-                  images={formData.galleryImages || []}
-                  onChange={(urls) => setFormData(prev => ({ ...prev, galleryImages: urls }))}
-                />
-              </div>
-            </>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Select Graduation Event Photos *
+              </label>
+              <ImageUpload
+                folder="ignite"
+                multiple={true}
+                images={formData.images || []}
+                onChange={(urls) => setFormData(prev => ({ ...prev, images: urls }))}
+              />
+            </div>
           )}
 
-          {/* Unified Fields: Order & Status */}
-          <div className="flex items-center gap-6 border-t border-zinc-100 dark:border-zinc-850 pt-4 select-none">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs font-bold text-zinc-550 dark:text-zinc-400 uppercase">Display Order Position</label>
+          {/* Display Order for Testimonials & Workshops */}
+          {activeTab !== 'ignite' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Display Order Position
+              </label>
               <input
                 type="number"
                 min="1"
                 required
                 value={formData.displayOrder || 1}
                 onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 1 }))}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary dark:text-zinc-200"
               />
             </div>
-            
-            <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-zinc-700 dark:text-zinc-350 self-end mb-2.5">
-              <input
-                type="checkbox"
-                checked={formData.status === 'active'}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.checked ? 'active' : 'inactive' }))}
-                className="w-4 h-4 rounded text-primary"
-              />
-              <span>Mark Active Status</span>
-            </label>
-          </div>
+          )}
 
-          {/* Submit Actions */}
-          <div className="flex items-center gap-3 border-t border-zinc-105 dark:border-zinc-850 pt-4">
+          {/* Submit */}
+          <div className="flex items-center gap-3 border-t border-zinc-100 dark:border-zinc-850 pt-4 mt-2">
             <button
               type="button"
               onClick={() => setIsFormOpen(false)}
@@ -836,53 +701,61 @@ const ActingSchoolManager = () => {
               type="submit"
               className="flex-1 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-sm shadow-md shadow-primary/10 active:scale-98 transition-all"
             >
-              Save Details
+              Save Changes
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* DELETE DIALOG */}
+      {/* DELETE CONFIRMATION */}
       <DeleteConfirmation
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
-        message="Are you sure you want to delete this acting school record? It will be removed immediately from the page layouts."
+        message="Are you sure you want to delete this record? This action will immediately remove the content from the public acting school section."
       />
 
-      {/* VIDEO MODAL PLAYER */}
-      {activeVideo && (
-        <Modal
-          isOpen={!!activeVideo}
-          onClose={() => setActiveVideo(null)}
-          title={activeVideo.title}
-          size="lg"
-        >
-          <VideoPreview url={activeVideo.url} title={activeVideo.title} />
-        </Modal>
-      )}
-
-      {/* MULTIPLE IMAGE GALLERY PREVIEW */}
+      {/* IMAGE PREVIEW ZOOM MODAL */}
       <Modal
-        isOpen={!!activeGallery}
-        onClose={() => setActiveGallery(null)}
-        title="Event Gallery Images"
-        size="lg"
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        title="Image Preview"
+        size="sm"
       >
-        <div className="flex flex-col gap-4">
-          {activeGallery && activeGallery.length === 0 ? (
-            <p className="text-zinc-400 text-sm py-8">No images in this gallery yet.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
-              {activeGallery?.map((url, idx) => (
-                <div key={idx} className="aspect-square rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-850 bg-white">
-                  <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover hover:scale-103 transition-transform cursor-zoom-in" />
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="w-full flex items-center justify-center p-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-100">
+          <img src={previewImage} alt="Zoom Preview" className="max-w-full max-h-[50vh] object-contain" />
         </div>
       </Modal>
+
+      {/* VIDEO PREVIEW MODAL */}
+      {activeVideoUrl && (
+        <Modal
+          isOpen={!!activeVideoUrl}
+          onClose={() => setActiveVideoUrl(null)}
+          title="Video Playback Preview"
+          size="lg"
+        >
+          <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+            {activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be') ? (
+              <iframe 
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${activeVideoUrl.split('v=')[1] || activeVideoUrl.split('/').pop()}?autoplay=1`}
+                title="Preview"
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <video 
+                src={activeVideoUrl}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+              ></video>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

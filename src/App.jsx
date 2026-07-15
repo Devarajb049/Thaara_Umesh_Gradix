@@ -7,6 +7,7 @@ import 'aos/dist/aos.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
+import CustomCursor from './components/CustomCursor';
 
 import Home from './pages/Home';
 import OurClientsPage from './pages/OurClientsPage';
@@ -14,7 +15,6 @@ import ShowcasePage from './pages/ShowcasePage';
 import ActingSchoolPage from './pages/ActingSchoolPage';
 import ContactUsPage from './pages/ContactUsPage';
 import ShootingHousePage from './pages/ShootingHousePage';
-import SubmitProfilePage from './pages/SubmitProfilePage';
 
 // Admin Imports
 import AdminLayout from './admin/AdminLayout';
@@ -24,7 +24,6 @@ import ShowcaseManager from './admin/pages/ShowcaseManager';
 import ActingSchoolManager from './admin/pages/ActingSchoolManager';
 import ShootingHouseManager from './admin/pages/ShootingHouseManager';
 import ContactManager from './admin/pages/ContactManager';
-import ArtistRegistrationManager from './admin/pages/ArtistRegistrationManager';
 import AdminLogin from './admin/pages/AdminLogin';
 import { DataProvider } from './admin/context/DataContext';
 
@@ -79,6 +78,7 @@ function App() {
 
   return (
     <DataProvider>
+      <CustomCursor />
       <Router>
         <Routes>
           {/* Public Website Routes */}
@@ -89,7 +89,6 @@ function App() {
             <Route path="/actingschool" element={<ActingSchoolPage />} />
             <Route path="/contact" element={<ContactUsPage />} />
             <Route path="/shootinghouse" element={<ShootingHousePage />} />
-            <Route path="/submit-profile" element={<SubmitProfilePage />} />
           </Route>
 
           {/* Admin Login Route */}
@@ -103,7 +102,6 @@ function App() {
             <Route path="acting-school" element={<ActingSchoolManager />} />
             <Route path="shooting-house" element={<ShootingHouseManager />} />
             <Route path="contact" element={<ContactManager />} />
-            <Route path="artist-registrations" element={<ArtistRegistrationManager />} />
           </Route>
         </Routes>
       </Router>

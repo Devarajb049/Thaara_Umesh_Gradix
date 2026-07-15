@@ -21,8 +21,7 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
     { name: 'Showcase', path: '/admin/showcase', icon: <Tv className="w-5 h-5 flex-shrink-0" /> },
     { name: 'Acting School', path: '/admin/acting-school', icon: <GraduationCap className="w-5 h-5 flex-shrink-0" /> },
     { name: 'Shooting House', path: '/admin/shooting-house', icon: <Camera className="w-5 h-5 flex-shrink-0" /> },
-    { name: 'Contact Messages', path: '/admin/contact', icon: <Inbox className="w-5 h-5 flex-shrink-0" /> },
-    { name: 'Artist Profiles', path: '/admin/artist-registrations', icon: <UserPlus className="w-5 h-5 flex-shrink-0" /> }
+    { name: 'Contact Messages', path: '/admin/contact', icon: <Inbox className="w-5 h-5 flex-shrink-0" /> }
   ];
 
   const sidebarContent = (

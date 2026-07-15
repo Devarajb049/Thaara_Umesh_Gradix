@@ -4,20 +4,9 @@ import { Link } from 'react-router-dom';
 import { useData } from '../admin/context/DataContext';
 
 const ShootingHousePage = () => {
-  const { shootingHouseImages, shootingHouseVideos } = useData();
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const { shootingHouseImages } = useData();
 
-  const images = shootingHouseImages.length > 0 
-    ? shootingHouseImages.map(img => img.url) 
-    : [
-        "https://static.wixstatic.com/media/e67e91_6810b8cc855742f2a161bf7af70b8c7b~mv2.jpeg", // 7.jpeg
-        "https://static.wixstatic.com/media/e67e91_321abb18e663495aa19394b58250068e~mv2.jpeg", // 6.jpeg
-        "https://static.wixstatic.com/media/e67e91_d47c869c116c48efb111b9c55a00b3ff~mv2.jpeg", // 5.jpeg
-        "https://static.wixstatic.com/media/e67e91_218a9b66e63546d6b608a21f7114d78d~mv2.jpeg", // 3.jpeg
-        "https://static.wixstatic.com/media/e67e91_8dab172717744e789248cd0f12454255~mv2.jpeg", // 2.jpeg
-        "https://static.wixstatic.com/media/e67e91_436ceeda4d044b73b042842081e9a137~mv2.jpeg", // 4.jpeg
-        "https://static.wixstatic.com/media/e67e91_67d73becfac143fe9d4886ef4d7fe3cd~mv2.jpeg"  // 1.jpeg
-      ];
+  const images = shootingHouseImages.map(img => img.url);
 
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -39,7 +28,7 @@ const ShootingHousePage = () => {
       {/* Banner Section - Background matches 7.jpeg (Exterior) */}
       <section className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden bg-black flex-shrink-0">
         <img
-          src="https://static.wixstatic.com/media/e67e91_6810b8cc855742f2a161bf7af70b8c7b~mv2.jpeg"
+          src={images[0] || "/uploads/shooting-house/room-1.jpg"}
           alt="Akshaya Professional Shooting House"
           className="absolute inset-0 w-full h-full object-cover opacity-60"
         />
@@ -70,51 +59,53 @@ const ShootingHousePage = () => {
           </div>
 
           {/* Interactive Image Showcase Gallery */}
-          <div className="flex flex-col gap-4 mb-12" data-aos="zoom-in">
-            {/* Active Display Frame */}
-            <div className="relative w-full aspect-[16/10] md:aspect-[16/9] bg-black/5 rounded-2xl overflow-hidden shadow-lg border border-black/5">
-              <img
-                src={images[activeIdx]}
-                alt={`Studio Room View ${activeIdx + 1}`}
-                className="w-full h-full object-cover transition-all duration-500"
-              />
+          {images.length > 0 && (
+            <div className="flex flex-col gap-4 mb-12" data-aos="zoom-in">
+              {/* Active Display Frame */}
+              <div className="relative w-full aspect-[16/10] md:aspect-[16/9] bg-black/5 rounded-2xl overflow-hidden shadow-lg border border-black/5">
+                <img
+                  src={images[activeIdx]}
+                  alt={`Studio Room View ${activeIdx + 1}`}
+                  className="w-full h-full object-cover transition-all duration-500"
+                />
 
-              {/* Slide controls */}
-              <button
-                onClick={handlePrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-dark flex items-center justify-center shadow-md hover:scale-105 transition-all z-10"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={handleNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-dark flex items-center justify-center shadow-md hover:scale-105 transition-all z-10"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-
-            {/* Thumbnail Row */}
-            <div className="grid grid-cols-7 gap-2 md:gap-4 overflow-hidden py-2">
-              {images.map((img, idx) => (
+                {/* Slide controls */}
                 <button
-                  key={idx}
-                  onClick={() => setActiveIdx(idx)}
-                  className={`aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 ${idx === activeIdx ? 'border-primary scale-[1.03] shadow-md' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'
-                    }`}
+                  onClick={handlePrev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-dark flex items-center justify-center shadow-md hover:scale-105 transition-all z-10"
                 >
-                  <img
-                    src={img}
-                    alt={`Thumbnail ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <ChevronLeft size={20} />
                 </button>
-              ))}
+                <button
+                  onClick={handleNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-dark flex items-center justify-center shadow-md hover:scale-105 transition-all z-10"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+
+              {/* Thumbnail Row */}
+              <div className="grid grid-cols-7 gap-2 md:gap-4 overflow-hidden py-2">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveIdx(idx)}
+                    className={`aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 ${idx === activeIdx ? 'border-primary scale-[1.03] shadow-md' : 'border-black/5 hover:border-black/20 opacity-80 hover:opacity-100'
+                      }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Location Map & Details */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
 
             {/* Map Box */}
             <div className="md:col-span-8 rounded-2xl overflow-hidden border border-black/5 shadow-md aspect-video md:aspect-auto min-h-[300px]" data-aos="fade-right">
@@ -172,75 +163,8 @@ const ShootingHousePage = () => {
             </div>
 
           </div>
-
-          {/* Video / Showcase List linked to admin dashboard */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6" data-aos="fade-up">
-            {shootingHouseVideos.map((video, idx) => (
-              <div 
-                key={video.id || idx} 
-                className="relative aspect-video rounded-2xl overflow-hidden bg-black shadow-md border border-white/10 group cursor-pointer flex items-center justify-center"
-                onClick={() => {
-                  setSelectedVideo(video);
-                }}
-              >
-                {video.thumbnail && (
-                  <img 
-                    src={video.thumbnail} 
-                    alt={video.title} 
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-opacity"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
-                    <Camera size={24} />
-                  </div>
-                </div>
-                <div className="absolute bottom-4 left-4 z-20 text-left">
-                  <h4 className="text-white text-sm font-bold font-serif">{video.title}</h4>
-                  <p className="text-white/60 text-xs font-light">{video.description || 'Virtual walkthrough'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Video Modal Popup */}
-          {selectedVideo && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-xs">
-              <div className="absolute inset-0" onClick={() => setSelectedVideo(null)}></div>
-              <div className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 z-10">
-                <button 
-                  onClick={() => setSelectedVideo(null)}
-                  className="absolute top-4 right-4 text-white/50 hover:text-white bg-black/85 p-2 rounded-full z-20"
-                >
-                  <X size={20} />
-                </button>
-                <div className="relative w-full aspect-video">
-                  {selectedVideo.youtubeUrl && (selectedVideo.youtubeUrl.includes('youtube.com') || selectedVideo.youtubeUrl.includes('youtu.be')) ? (
-                    <iframe 
-                      className="absolute inset-0 w-full h-full"
-                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeUrl.split('v=')[1] || selectedVideo.youtubeUrl.split('/').pop()}?autoplay=1`}
-                      title={selectedVideo.title}
-                      frameBorder="0" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                    ></iframe>
-                  ) : (
-                    <video 
-                      src={selectedVideo.youtubeUrl || "https://video.wixstatic.com/video/e67e91_7ff82a837b9c4f2c9226ec9cc49f9e40/480p/mp4/file.mp4"}
-                      className="absolute inset-0 w-full h-full object-contain"
-                      controls
-                      autoPlay
-                    ></video>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
         </div>
       </section>
-
     </div>
   );
 };

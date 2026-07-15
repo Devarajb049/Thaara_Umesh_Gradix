@@ -26,9 +26,6 @@ const CTA = () => {
               <Link to="/contact" className="bg-white text-primary px-8 py-4 rounded-full font-bold text-xs tracking-widest hover:bg-secondary transition-all hover:-translate-y-1 shadow-xl">
                 HIRE TALENT
               </Link>
-              <Link to="/submit-profile" className="bg-transparent border border-white/30 text-white px-8 py-4 rounded-full font-bold text-xs tracking-widest hover:bg-white/10 transition-all">
-                APPLY AS ACTOR
-              </Link>
             </div>
           </div>
         </div>

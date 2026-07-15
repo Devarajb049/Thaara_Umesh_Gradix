@@ -5,27 +5,51 @@ const ImageUpload = ({
   images = [], 
   onChange, 
   multiple = false, 
-  label = "Upload Image" 
+  label = "Upload Image",
+  folder = "general"
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleFiles = (files) => {
+  const handleFiles = async (files) => {
     if (files.length === 0) return;
     
     setIsUploading(true);
     
-    // Simulate upload delay
-    setTimeout(() => {
-      const newUrls = Array.from(files).map(file => URL.createObjectURL(file));
+    try {
       if (multiple) {
-        onChange([...images, ...newUrls]);
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+          formData.append('images', file);
+        });
+        
+        const response = await fetch(`/api/upload/multiple?folder=${folder}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+          onChange([...images, ...data.urls]);
+        }
       } else {
-        onChange([newUrls[0]]);
+        const formData = new FormData();
+        formData.append('image', files[0]);
+        
+        const response = await fetch(`/api/upload?folder=${folder}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+          onChange([data.url]);
+        }
       }
+    } catch (error) {
+      console.error('File upload failed:', error);
+    } finally {
       setIsUploading(false);
-    }, 800);
+    }
   };
 
   const handleDrag = (e) => {

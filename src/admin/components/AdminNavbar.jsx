@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Menu, Sun, Moon, Bell, ChevronDown, User, LogOut, Settings, Sidebar } from 'lucide-react';
 import Breadcrumb from './Breadcrumb';
 import { useLocation } from 'react-router-dom';
+import { useData } from '../context/DataContext';
 
 const AdminNavbar = ({ collapsed, setCollapsed, setMobileOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
+  const { contacts } = useData();
 
   // Generate breadcrumb items from route paths
   const getBreadcrumbs = () => {
@@ -33,11 +35,27 @@ const AdminNavbar = ({ collapsed, setCollapsed, setMobileOpen }) => {
 
   const breadcrumbs = getBreadcrumbs();
 
-  const mockNotifs = [
-    { id: 1, text: "New application submitted by Aryan Dixit", time: "10 mins ago", unread: true },
-    { id: 2, text: "Contact message from Rohan Mehra", time: "1 hour ago", unread: true },
-    { id: 3, text: "Workshop booking inquiries updated", time: "Yesterday", unread: false }
-  ];
+  const unreadContacts = contacts.filter(c => c.status === 'unread');
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return 'Just now';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  const notifications = unreadContacts.slice(0, 5).map(c => ({
+    id: c.id,
+    text: `New inquiry from ${c.name}: "${c.subject}"`,
+    time: formatTime(c.createdDate)
+  }));
 
   return (
     <header className="sticky top-0 z-30 w-full px-6 py-4 flex items-center justify-between border-b border-zinc-150 bg-white transition-colors duration-300">
@@ -79,7 +97,9 @@ const AdminNavbar = ({ collapsed, setCollapsed, setMobileOpen }) => {
             className="relative p-2.5 rounded-xl border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 transition-all select-none active:scale-95"
           >
             <Bell className="w-4.5 h-4.5" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-white animate-pulse" />
+            {unreadContacts.length > 0 && (
+              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-white animate-pulse" />
+            )}
           </button>
 
           {showNotifications && (
@@ -88,20 +108,30 @@ const AdminNavbar = ({ collapsed, setCollapsed, setMobileOpen }) => {
               <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-zinc-150/80 bg-white p-4 shadow-xl backdrop-blur-xl z-50 animate-fade-in flex flex-col gap-2.5 text-left">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                   <h4 className="text-sm font-bold text-zinc-800 font-serif">Notifications</h4>
-                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">2 New</span>
+                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+                    {unreadContacts.length} New
+                  </span>
                 </div>
                 <div className="flex flex-col gap-2 max-h-60 overflow-y-auto custom-scrollbar">
-                  {mockNotifs.map((n) => (
-                    <div 
-                      key={n.id} 
-                      className={`p-2.5 rounded-xl text-xs hover:bg-zinc-50 transition-colors cursor-pointer border border-transparent ${
-                        n.unread ? 'bg-primary/5' : ''
-                      }`}
-                    >
-                      <p className="font-semibold text-zinc-800 leading-relaxed">{n.text}</p>
-                      <span className="text-[10px] text-zinc-400 mt-1 block">{n.time}</span>
+                  {notifications.length > 0 ? (
+                    notifications.map((n) => (
+                      <div 
+                        key={n.id} 
+                        onClick={() => {
+                          setShowNotifications(false);
+                          window.location.href = '/admin/contact';
+                        }}
+                        className="p-2.5 rounded-xl text-xs hover:bg-zinc-50 transition-colors cursor-pointer border border-transparent bg-primary/5"
+                      >
+                        <p className="font-semibold text-zinc-800 leading-relaxed">{n.text}</p>
+                        <span className="text-[10px] text-zinc-400 mt-1 block">{n.time}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-xs text-zinc-400">
+                      No new notifications.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </>
@@ -130,22 +160,8 @@ const AdminNavbar = ({ collapsed, setCollapsed, setMobileOpen }) => {
               <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-zinc-150/80 bg-white p-2 shadow-xl backdrop-blur-xl z-50 animate-fade-in flex flex-col gap-1 text-left">
                 <div className="px-3.5 py-2.5 border-b border-zinc-100 mb-1 select-none">
                   <p className="text-sm font-bold text-zinc-800">Agency Director</p>
-                  <p className="text-[10px] text-zinc-450">admin@thaaraumesh.com</p>
+                  <p className="text-[10px] text-zinc-400 font-semibold">Username: admin</p>
                 </div>
-                <button 
-                  className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 rounded-xl transition-all"
-                  onClick={() => setShowProfileMenu(false)}
-                >
-                  <User className="w-4 h-4 text-zinc-400" />
-                  <span>My Profile</span>
-                </button>
-                <button 
-                  className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 rounded-xl transition-all"
-                  onClick={() => setShowProfileMenu(false)}
-                >
-                  <Settings className="w-4 h-4 text-zinc-400" />
-                  <span>Settings</span>
-                </button>
                 <button 
                   onClick={() => {
                     localStorage.removeItem('admin-logged-in');

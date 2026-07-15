@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Mail, 
-  MailOpen, 
-  Trash2, 
-  User, 
-  Phone, 
-  Clock, 
+import {
+  Mail,
+  MailOpen,
+  Trash2,
+  User,
+  Phone,
+  Clock,
   Inbox as InboxIcon,
   Search,
   CheckCircle,
@@ -22,9 +22,9 @@ import DeleteConfirmation from '../components/DeleteConfirmation';
 
 const ContactManager = () => {
   const { addToast } = useToast();
-  const { contacts: messages, setContacts: setMessages } = useData();
+  const { contacts: messages, deleteContactMessage, markContactMessageRead } = useData();
   const [loading, setLoading] = useState(false);
-  
+
   // Selected Message in Inbox split pane
   const [activeMessage, setActiveMessage] = useState(null);
 
@@ -40,10 +40,10 @@ const ContactManager = () => {
 
   // Filter messages
   const filteredMessages = messages.filter(msg => {
-    const matchesSearch = msg.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          msg.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          msg.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          msg.phone.includes(searchTerm);
+    const matchesSearch = msg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      msg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      msg.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      msg.phone.includes(searchTerm);
     const matchesStatus = statusFilter ? msg.status === statusFilter : true;
     return matchesSearch && matchesStatus;
   });
@@ -58,24 +58,30 @@ const ContactManager = () => {
   }, [filteredMessages, loading, activeMessage]);
 
   // Actions
-  const handleSelectMessage = (msg) => {
+  const handleSelectMessage = async (msg) => {
     setActiveMessage(msg);
     // Mark as read automatically when opened
     if (msg.status === 'unread') {
-      setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, status: 'read' } : m));
-      setActiveMessage(prev => prev ? { ...prev, status: 'read' } : null);
-      addToast("Message marked as read", "info");
+      const success = await markContactMessageRead(msg.id, true);
+      if (success) {
+        setActiveMessage(prev => prev ? { ...prev, status: 'read' } : null);
+        addToast("Message marked as read", "info");
+      }
     }
   };
 
-  const toggleReadStatus = (id) => {
+  const toggleReadStatus = async (id) => {
     const msg = messages.find(m => m.id === id);
     if (!msg) return;
-    const nextStatus = msg.status === 'unread' ? 'read' : 'unread';
-    
-    setMessages(prev => prev.map(m => m.id === id ? { ...m, status: nextStatus } : m));
-    setActiveMessage(prev => prev && prev.id === id ? { ...prev, status: nextStatus } : prev);
-    addToast(`Message marked as ${nextStatus}`, "success");
+    const nextReadState = msg.status === 'unread';
+    const success = await markContactMessageRead(id, nextReadState);
+    if (success) {
+      const statusText = nextReadState ? 'read' : 'unread';
+      setActiveMessage(prev => prev && prev.id === id ? { ...prev, status: statusText } : prev);
+      addToast(`Message marked as ${statusText}`, "success");
+    } else {
+      addToast("Failed to update message status", "error");
+    }
   };
 
   const triggerDelete = (id) => {
@@ -83,13 +89,18 @@ const ContactManager = () => {
     setIsDeleteOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTargetId) return;
-    setMessages(prev => prev.filter(m => m.id !== deleteTargetId));
-    if (activeMessage && activeMessage.id === deleteTargetId) {
-      setActiveMessage(null);
+    const success = await deleteContactMessage(deleteTargetId);
+    if (success) {
+      if (activeMessage && activeMessage.id === deleteTargetId) {
+        setActiveMessage(null);
+      }
+      addToast("Message deleted from inbox", "success");
+    } else {
+      addToast("Failed to delete message", "error");
     }
-    addToast("Message deleted from inbox", "success");
+    setIsDeleteOpen(false);
   };
 
   return (
@@ -108,19 +119,19 @@ const ContactManager = () => {
 
       {/* Toolbar filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-zinc-900/10 border border-zinc-150/80 dark:border-zinc-805/40 p-4 rounded-3xl backdrop-blur-md flex-shrink-0">
-        <SearchBar 
-          value={searchTerm} 
-          onChange={(val) => { setSearchTerm(val); setActiveMessage(null); }} 
-          placeholder="Search inbox..." 
+        <SearchBar
+          value={searchTerm}
+          onChange={(val) => { setSearchTerm(val); setActiveMessage(null); }}
+          placeholder="Search inbox..."
         />
-        <Filters 
-          filters={[{ 
-            name: 'status', 
-            label: 'Status', 
-            choices: [{ value: 'unread', label: 'Unread' }, { value: 'read', label: 'Read' }] 
-          }]} 
-          values={{ status: statusFilter }} 
-          onChange={(name, val) => { setStatusFilter(val); setActiveMessage(null); }} 
+        <Filters
+          filters={[{
+            name: 'status',
+            label: 'Status',
+            choices: [{ value: 'unread', label: 'Unread' }, { value: 'read', label: 'Read' }]
+          }]}
+          values={{ status: statusFilter }}
+          onChange={(name, val) => { setStatusFilter(val); setActiveMessage(null); }}
         />
       </div>
 
@@ -157,13 +168,12 @@ const ContactManager = () => {
                   <div
                     key={msg.id}
                     onClick={() => handleSelectMessage(msg)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer text-left flex flex-col gap-1.5 relative ${
-                      isActive 
-                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 dark:bg-rose-600 dark:border-rose-600/40 dark:shadow-rose-600/5' 
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer text-left flex flex-col gap-1.5 relative ${isActive
+                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 dark:bg-rose-600 dark:border-rose-600/40 dark:shadow-rose-600/5'
                         : isUnread
-                        ? 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm font-semibold'
-                        : 'bg-white/40 dark:bg-zinc-900/20 border-zinc-100 dark:border-zinc-900 hover:bg-white/60 dark:hover:bg-zinc-900/40'
-                    }`}
+                          ? 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm font-semibold'
+                          : 'bg-white/40 dark:bg-zinc-900/20 border-zinc-100 dark:border-zinc-900 hover:bg-white/60 dark:hover:bg-zinc-900/40'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className={`text-sm font-bold truncate ${isActive ? 'text-white' : 'text-zinc-800 dark:text-zinc-200'}`}>
@@ -256,7 +266,7 @@ const ContactManager = () => {
                         <p className="text-xs text-zinc-500 dark:text-zinc-450">{activeMessage.email}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 text-xs font-medium text-zinc-550 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
                       <span className="flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-zinc-400" />
@@ -289,7 +299,7 @@ const ContactManager = () => {
           <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-950 flex flex-col lg:hidden animate-fade-in text-left">
             <div className="px-5 py-4 border-b flex items-center justify-between">
               <span className="font-bold text-sm text-zinc-850 dark:text-zinc-200">Message Detail</span>
-              <button 
+              <button
                 onClick={() => setActiveMessage(null)}
                 className="text-xs font-bold text-primary dark:text-rose-450 hover:underline"
               >

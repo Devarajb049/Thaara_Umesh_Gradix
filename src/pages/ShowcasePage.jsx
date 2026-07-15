@@ -336,21 +336,38 @@ const ShowcasePage = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
 
-  const videos = showcases.filter(s => s.status === 'active').map(s => ({
-    id: s.id,
-    title: s.title,
-    brand: s.tags?.[0] || 'Thaara Umesh',
-    description: s.description,
-    duration: s.duration,
-    thumbnail: s.thumbnail,
-    category: s.category
-  }));
+  const videos = showcases.map(s => {
+    let ytId = s.youtube_url;
+    if (s.youtube_url.includes('youtube.com') || s.youtube_url.includes('youtu.be')) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = s.youtube_url.match(regExp);
+      if (match && match[2].length === 11) {
+        ytId = match[2];
+      }
+    } else if (s.youtube_url.includes('wixstatic.com')) {
+      const parts = s.youtube_url.split('/');
+      const wixId = parts.find(p => p.includes('_'));
+      ytId = wixId || 'e67e91_adf523a122b441198b119925da808f';
+    }
+    
+    return {
+      id: ytId,
+      title: s.title,
+      brand: s.brand || 'Showcase',
+      description: s.description || '',
+      duration: s.duration || '01:00',
+      thumbnail: s.thumbnail || `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`,
+      category: s.category || 'Commercials'
+    };
+  });
 
-  const categories = ['All Categories', 'Commercials', 'Short Films', 'Corporate', 'Music Videos'];
+  // Extract unique categories from the list of videos
+  const categories = ['All Categories', ...new Set(videos.map(v => v.category))];
 
+  // Dynamic filtering based on category state
   const filteredVideos = category === 'All Categories'
     ? videos
-    : videos.filter(video => video.category === category);
+    : videos.filter(v => v.category === category);
 
   const handleLoadMore = () => {
     // Add 12 more items (3 rows)
@@ -402,7 +419,7 @@ const ShowcasePage = () => {
             </h2>
 
             {/* Custom Dropdown */}
-            <div className="relative">
+            <div className="relative z-40">
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 text-dark/70 hover:text-primary font-semibold text-sm transition-colors py-2"
@@ -411,7 +428,7 @@ const ShowcasePage = () => {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-black/5 shadow-xl rounded-lg py-2 z-30">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-black/5 shadow-xl rounded-lg py-2 z-[99]">
                   {categories.map((cat) => (
                     <button 
                       key={cat} 

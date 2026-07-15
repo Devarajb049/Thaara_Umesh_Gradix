@@ -3,17 +3,22 @@ const Team = () => {
     {
       name: 'Thaara Umesh',
       role: 'Casting Director',
-      image: '/images/team/thaara_umesh.avif'
+      image: '/uploads/images/team/thaara_umesh.avif'
+    },
+    {
+      name: 'Arun Kumar',
+      role: 'Casting Director',
+      image: '/uploads/images/team/arun_kumar.jpg'
     },
     {
       name: 'Ajay Umesh',
       role: 'Managing Director',
-      image: '/images/team/ajay_umesh.avif'
+      image: '/uploads/images/team/ajay_umesh.avif'
     },
     {
       name: 'Kruthi HM',
       role: 'CEO',
-      image: '/images/team/kruthi_hm.avif'
+      image: '/uploads/images/team/kruthi_hm.avif'
     }
   ];
 

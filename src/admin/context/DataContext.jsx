@@ -1,19 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { originalClients } from '../../sections/Clients';
-import { baseVideos } from '../../pages/ShowcasePage';
-import { testimonialsData } from '../../components/Testimonials';
-import { workshopVideos } from '../../components/Workshops';
-import { galleryImages } from '../../components/Graduation';
-import { 
-  mockShowcases, 
-  mockTestimonials, 
-  mockWorkshops, 
-  mockEvents, 
-  mockShootingHouseImages, 
-  mockShootingHouseVideos, 
-  mockContacts, 
-  mockArtistRegistrations 
-} from '../dummyData';
 
 const DataContext = createContext(null);
 
@@ -26,244 +11,659 @@ export const useData = () => {
 };
 
 export const DataProvider = ({ children }) => {
-  // Clients state (Combining the 115 original clients with standard schema)
-  const [clients, setClients] = useState(() => {
-    const saved = localStorage.getItem('admin-clients');
-    if (saved) return JSON.parse(saved);
-    
-    // Map original clients list to admin schema
-    const mappedOriginals = originalClients.map((c, i) => ({
-      id: `c_init_${i}`,
-      clientName: c.name,
-      logo: c.logo,
-      category: 'Brands',
-      displayOrder: i + 1,
-      status: 'active',
-      featured: false
-    }));
-    return mappedOriginals;
-  });
+  const [clients, setClients] = useState([]);
+  const [showcases, setShowcases] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [workshops, setWorkshops] = useState([]);
+  const [igniteImages, setIgniteImages] = useState([]);
+  const [shootingHouseImages, setShootingHouseImages] = useState([]);
+  const [shootingHouseVideos, setShootingHouseVideos] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Showcase state
-  const [showcases, setShowcases] = useState(() => {
-    const saved = localStorage.getItem('admin-showcases');
-    const parsed = saved ? JSON.parse(saved) : [];
-    // Auto upgrade if it only has mock dummy data (less than 10 items)
-    if (parsed.length > 10) return parsed;
-    
-    // Map baseVideos to showcases schema
-    return baseVideos.map((v, i) => ({
-      id: v.id,
-      title: v.title,
-      slug: v.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      description: v.description || 'Professional portfolio video matching the casting projects.',
-      thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`,
-      youtubeUrl: `https://www.youtube.com/watch?v=${v.id}`,
-      category: v.category,
-      tags: [v.brand || 'Showcase'],
-      duration: v.duration || '01:00',
-      displayOrder: i + 1,
-      featured: i < 2,
-      status: 'active'
-    }));
-  });
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      
+      const [
+        clientsRes,
+        showcasesRes,
+        testimonialsRes,
+        workshopsRes,
+        igniteRes,
+        shImagesRes,
+        shVideosRes,
+        contactsRes
+      ] = await Promise.all([
+        fetch('/api/clients').then(r => r.json()),
+        fetch('/api/showcases').then(r => r.json()),
+        fetch('/api/testimonials').then(r => r.json()),
+        fetch('/api/workshops').then(r => r.json()),
+        fetch('/api/ignite-images').then(r => r.json()),
+        fetch('/api/shooting-house/images').then(r => r.json()),
+        fetch('/api/shooting-house/videos').then(r => r.json()),
+        fetch('/api/contacts?limit=100').then(r => r.json())
+      ]);
 
-  // Testimonials state
-  const [testimonials, setTestimonials] = useState(() => {
-    const saved = localStorage.getItem('admin-testimonials');
-    const parsed = saved ? JSON.parse(saved) : [];
-    
-    // Check if it already has the synchronized keys
-    const isUpgraded = parsed.length > 3 && parsed.every(t => t.personName && t.designation);
-    if (isUpgraded) return parsed;
-    
-    const sourceData = parsed.length > 3 ? parsed : testimonialsData;
-    return sourceData.map((t, i) => ({
-      id: t.id ? `t_${t.id}` : `t_init_${i}`,
-      clientName: t.name || t.clientName,
-      personName: t.name || t.clientName || t.personName,
-      role: t.profession || t.role,
-      designation: t.profession || t.role || t.designation,
-      feedback: t.review || t.feedback,
-      review: t.review || t.feedback || t.review,
-      avatar: t.profileImage || t.avatar || t.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-      photo: t.profileImage || t.avatar || t.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-      status: t.status || 'active',
-      displayOrder: t.displayOrder || i + 1
-    }));
-  });
-
-  // Workshops state
-  const [workshops, setWorkshops] = useState(() => {
-    const saved = localStorage.getItem('admin-workshops');
-    const parsed = saved ? JSON.parse(saved) : [];
-    // Auto upgrade if it only has mock dummy data (2 items)
-    if (parsed.length > 2) return parsed;
-    
-    return workshopVideos.map((w, i) => ({
-      id: w.id ? `w_${w.id}` : `w_init_${i}`,
-      title: w.title,
-      description: w.description || 'Intensive acting school workshops training sessions.',
-      videoUrl: w.videoUrl,
-      thumbnail: w.thumbnail,
-      duration: w.duration || '02:00',
-      category: w.category || 'Workshop',
-      status: 'active',
-      displayOrder: i + 1
-    }));
-  });
-
-  // Ignite Events state
-  const [events, setEvents] = useState(() => {
-    const saved = localStorage.getItem('admin-events');
-    const parsed = saved ? JSON.parse(saved) : [];
-    // Auto upgrade if it only has mock dummy data (less than 12 images in graduation event)
-    const hasFullImages = parsed.some(ev => ev.id === 'ev_graduation_day' && ev.galleryImages?.length >= 12);
-    if (parsed.length > 0 && hasFullImages) return parsed;
-    
-    return mockEvents.map((ev) => {
-      if (ev.id === 'ev_graduation_day' || ev.eventTitle.toLowerCase().includes('graduation')) {
-        return {
-          ...ev,
-          galleryImages: galleryImages.map(img => img.url)
-        };
+      if (clientsRes.success) setClients(clientsRes.data);
+      if (showcasesRes.success) {
+        // Map database showcases to expected frontend schema
+        setShowcases(showcasesRes.data.map(item => ({
+          ...item,
+          status: 'active', // Mock status for UI compatibility
+          tags: ['Showcase'],
+          duration: '01:00'
+        })));
       }
-      return ev;
-    });
-  });
-
-  // Shooting House states
-  const [shootingHouseImages, setShootingHouseImages] = useState(() => {
-    const saved = localStorage.getItem('admin-sh-images');
-    return saved ? JSON.parse(saved) : mockShootingHouseImages;
-  });
-
-  const [shootingHouseVideos, setShootingHouseVideos] = useState(() => {
-    const saved = localStorage.getItem('admin-sh-videos');
-    return saved ? JSON.parse(saved) : mockShootingHouseVideos;
-  });
-
-  // Contact inbox state
-  const [contacts, setContacts] = useState(() => {
-    const saved = localStorage.getItem('admin-contacts');
-    return saved ? JSON.parse(saved) : mockContacts;
-  });
-
-  // Artist profiles state
-  const [artistRegistrations, setArtistRegistrations] = useState(() => {
-    const saved = localStorage.getItem('admin-artist-regs');
-    return saved ? JSON.parse(saved) : mockArtistRegistrations;
-  });
-
-  // Persist states to local storage on change
-  useEffect(() => {
-    localStorage.setItem('admin-clients', JSON.stringify(clients));
-  }, [clients]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-showcases', JSON.stringify(showcases));
-  }, [showcases]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-testimonials', JSON.stringify(testimonials));
-  }, [testimonials]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-workshops', JSON.stringify(workshops));
-  }, [workshops]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-events', JSON.stringify(events));
-  }, [events]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-sh-images', JSON.stringify(shootingHouseImages));
-  }, [shootingHouseImages]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-sh-videos', JSON.stringify(shootingHouseVideos));
-  }, [shootingHouseVideos]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-contacts', JSON.stringify(contacts));
-  }, [contacts]);
-
-  useEffect(() => {
-    localStorage.setItem('admin-artist-regs', JSON.stringify(artistRegistrations));
-  }, [artistRegistrations]);
-
-  // Mutations callbacks for public and admin operations
-  const addContactMessage = (msg) => {
-    const newMsg = {
-      id: `m_${Math.random().toString(36).substring(2, 9)}`,
-      name: msg.name,
-      email: msg.email,
-      phone: msg.phone,
-      subject: msg.subject || 'Casting Inquiry',
-      message: msg.message,
-      createdDate: new Date().toISOString(),
-      status: 'unread'
-    };
-    setContacts(prev => [newMsg, ...prev]);
+      if (testimonialsRes.success) {
+        // Map database testimonials to expected frontend schema
+        setTestimonials(testimonialsRes.data.map(item => ({
+          id: item.id,
+          personName: item.person_name,
+          designation: item.designation,
+          photo: item.profile_image,
+          review: item.review,
+          displayOrder: item.display_order,
+          status: 'active'
+        })));
+      }
+      if (workshopsRes.success) {
+        setWorkshops(workshopsRes.data.map(item => ({
+          id: item.id,
+          thumbnail: item.thumbnail,
+          videoUrl: item.youtube_url,
+          displayOrder: item.display_order,
+          status: 'active'
+        })));
+      }
+      if (igniteRes.success) setIgniteImages(igniteRes.data);
+      if (shImagesRes.success) {
+        setShootingHouseImages(shImagesRes.data.map(item => ({
+          id: item.id,
+          url: item.image_url,
+          displayOrder: item.display_order
+        })));
+      }
+      if (shVideosRes.success) {
+        setShootingHouseVideos(shVideosRes.data.map(item => ({
+          id: item.id,
+          thumbnail: item.thumbnail,
+          youtubeUrl: item.youtube_url,
+          displayOrder: item.display_order
+        })));
+      }
+      if (contactsRes.success) {
+        setContacts(contactsRes.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          subject: item.subject,
+          message: item.message,
+          status: item.is_read ? 'read' : 'unread',
+          createdDate: item.created_at
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to fetch data from API, using fallback:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addArtistRegistration = (reg) => {
-    const newReg = {
-      id: `ar_${Math.random().toString(36).substring(2, 9)}`,
-      fullName: reg.fullName,
-      age: parseInt(reg.age) || 20,
-      gender: reg.gender || 'Female',
-      email: reg.email,
-      phone: reg.phone,
-      city: reg.city || 'Chennai',
-      state: reg.state || 'Tamil Nadu',
-      height: reg.height || "5'6\"",
-      weight: reg.weight || '55 kg',
-      languagesKnown: reg.languagesKnown || 'English, Tamil',
-      experience: reg.experience || 'No previous experience.',
-      category: reg.category || 'Model',
-      skills: reg.skills || 'Grooming',
-      instagram: reg.instagram || '',
-      portfolio: reg.portfolio || '',
-      profilePhoto: reg.profilePhoto || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-      resume: reg.resume || '',
-      introductionVideo: reg.introductionVideo || '',
-      applicationStatus: 'Pending',
-      submittedDate: new Date().toISOString()
-    };
-    setArtistRegistrations(prev => [newReg, ...prev]);
+  const fetchContactsOnly = async () => {
+    try {
+      const response = await fetch('/api/contacts');
+      const contactsRes = await response.json();
+      if (contactsRes.success) {
+        setContacts(contactsRes.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          subject: item.subject,
+          message: item.message,
+          status: item.is_read ? 'read' : 'unread',
+          createdDate: item.created_at
+        })));
+      }
+    } catch (e) {
+      console.error('Failed to poll contacts:', e);
+    }
   };
 
-  const setTestimonialsSynced = (newVal) => {
-    setTestimonials(prev => {
-      const rawVal = typeof newVal === 'function' ? newVal(prev) : newVal;
-      return rawVal.map(t => ({
-        ...t,
-        clientName: t.personName || t.clientName || '',
-        role: t.designation || t.role || '',
-        feedback: t.review || t.feedback || '',
-        avatar: t.photo || t.avatar || '',
-        personName: t.clientName || t.personName || '',
-        designation: t.role || t.designation || '',
-        review: t.feedback || t.review || '',
-        photo: t.avatar || t.photo || ''
-      }));
-    });
+  useEffect(() => {
+    fetchAllData();
+
+    // Poll contacts every 10 seconds for real-time notifications
+    const interval = setInterval(() => {
+      const isLoggedIn = localStorage.getItem('admin-logged-in') === 'true';
+      if (isLoggedIn) {
+        fetchContactsOnly();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- Clients Mutators ---
+  const addClientLogo = async (logoUrl, order) => {
+    try {
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo: logoUrl, display_order: order })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setClients(prev => [...prev, resData.data].sort((a, b) => a.display_order - b.display_order));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
   };
+
+  const updateClientLogo = async (id, logoUrl, order) => {
+    try {
+      const response = await fetch(`/api/clients/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo: logoUrl, display_order: order })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setClients(prev => prev.map(c => c.id === parseInt(id) ? resData.data : c).sort((a, b) => a.display_order - b.display_order));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteClientLogo = async (id) => {
+    try {
+      const response = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setClients(prev => prev.filter(c => c.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Showcase Mutators ---
+  const addShowcaseVideo = async (showcaseData) => {
+    try {
+      const response = await fetch('/api/showcases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: showcaseData.title,
+          thumbnail: showcaseData.thumbnail,
+          youtube_url: showcaseData.youtubeUrl,
+          display_order: showcaseData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setShowcases(prev => [...prev, {
+          ...item,
+          status: 'active',
+          tags: ['Showcase'],
+          duration: '01:00'
+        }].sort((a, b) => a.display_order - b.display_order));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const updateShowcaseVideo = async (id, showcaseData) => {
+    try {
+      const response = await fetch(`/api/showcases/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: showcaseData.title,
+          thumbnail: showcaseData.thumbnail,
+          youtube_url: showcaseData.youtubeUrl,
+          display_order: showcaseData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setShowcases(prev => prev.map(s => s.id === parseInt(id) ? {
+          ...item,
+          status: 'active',
+          tags: ['Showcase'],
+          duration: '01:00'
+        } : s).sort((a, b) => a.display_order - b.display_order));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteShowcaseVideo = async (id) => {
+    try {
+      const response = await fetch(`/api/showcases/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setShowcases(prev => prev.filter(s => s.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Testimonials Mutators ---
+  const addTestimonialRecord = async (tData) => {
+    try {
+      const response = await fetch('/api/testimonials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person_name: tData.personName,
+          designation: tData.designation,
+          profile_image: tData.photo,
+          review: tData.review,
+          display_order: tData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setTestimonials(prev => [...prev, {
+          id: item.id,
+          personName: item.person_name,
+          designation: item.designation,
+          photo: item.profile_image,
+          review: item.review,
+          displayOrder: item.display_order,
+          status: 'active'
+        }].sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const updateTestimonialRecord = async (id, tData) => {
+    try {
+      const response = await fetch(`/api/testimonials/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person_name: tData.personName,
+          designation: tData.designation,
+          profile_image: tData.photo,
+          review: tData.review,
+          display_order: tData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setTestimonials(prev => prev.map(t => t.id === parseInt(id) ? {
+          id: item.id,
+          personName: item.person_name,
+          designation: item.designation,
+          photo: item.profile_image,
+          review: item.review,
+          displayOrder: item.display_order,
+          status: 'active'
+        } : t).sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteTestimonialRecord = async (id) => {
+    try {
+      const response = await fetch(`/api/testimonials/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setTestimonials(prev => prev.filter(t => t.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Workshops Mutators ---
+  const addWorkshopRecord = async (wData) => {
+    try {
+      const response = await fetch('/api/workshops', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thumbnail: wData.thumbnail,
+          youtube_url: wData.videoUrl,
+          display_order: wData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setWorkshops(prev => [...prev, {
+          id: item.id,
+          thumbnail: item.thumbnail,
+          videoUrl: item.youtube_url,
+          displayOrder: item.display_order,
+          status: 'active'
+        }].sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const updateWorkshopRecord = async (id, wData) => {
+    try {
+      const response = await fetch(`/api/workshops/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thumbnail: wData.thumbnail,
+          youtube_url: wData.videoUrl,
+          display_order: wData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setWorkshops(prev => prev.map(w => w.id === parseInt(id) ? {
+          id: item.id,
+          thumbnail: item.thumbnail,
+          videoUrl: item.youtube_url,
+          displayOrder: item.display_order,
+          status: 'active'
+        } : w).sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteWorkshopRecord = async (id) => {
+    try {
+      const response = await fetch(`/api/workshops/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setWorkshops(prev => prev.filter(w => w.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Ignite Graduation Images ---
+  const addIgniteImageRecord = async (imageUrl, order) => {
+    try {
+      const response = await fetch('/api/ignite-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageUrl, display_order: order })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setIgniteImages(prev => [...prev, resData.data].sort((a, b) => a.display_order - b.display_order));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteIgniteImageRecord = async (id) => {
+    try {
+      const response = await fetch(`/api/ignite-images/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setIgniteImages(prev => prev.filter(img => img.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Shooting House Images ---
+  const addShootingHouseImageRecord = async (imageUrl, order) => {
+    try {
+      const response = await fetch('/api/shooting-house/images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageUrl, display_order: order })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setShootingHouseImages(prev => [...prev, {
+          id: resData.data.id,
+          url: resData.data.image_url,
+          displayOrder: resData.data.display_order
+        }].sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteShootingHouseImageRecord = async (id) => {
+    try {
+      const response = await fetch(`/api/shooting-house/images/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setShootingHouseImages(prev => prev.filter(img => img.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Shooting House Videos ---
+  const addShootingHouseVideoRecord = async (vData) => {
+    try {
+      const response = await fetch('/api/shooting-house/videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thumbnail: vData.thumbnail,
+          youtube_url: vData.youtubeUrl,
+          display_order: vData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setShootingHouseVideos(prev => [...prev, {
+          id: item.id,
+          thumbnail: item.thumbnail,
+          youtubeUrl: item.youtube_url,
+          displayOrder: item.display_order
+        }].sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const updateShootingHouseVideoRecord = async (id, vData) => {
+    try {
+      const response = await fetch(`/api/shooting-house/videos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thumbnail: vData.thumbnail,
+          youtube_url: vData.youtubeUrl,
+          display_order: vData.displayOrder
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setShootingHouseVideos(prev => prev.map(v => v.id === parseInt(id) ? {
+          id: item.id,
+          thumbnail: item.thumbnail,
+          youtubeUrl: item.youtube_url,
+          displayOrder: item.display_order
+        } : v).sort((a, b) => a.displayOrder - b.displayOrder));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteShootingHouseVideoRecord = async (id) => {
+    try {
+      const response = await fetch(`/api/shooting-house/videos/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setShootingHouseVideos(prev => prev.filter(v => v.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // --- Contacts / Inbox Mutators ---
+  const addContactMessage = async (msg) => {
+    try {
+      const response = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: msg.name,
+          email: msg.email,
+          phone: msg.phone,
+          subject: msg.subject,
+          message: msg.message
+        })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const item = resData.data;
+        setContacts(prev => [{
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          subject: item.subject,
+          message: item.message,
+          status: 'unread',
+          createdDate: item.created_at
+        }, ...prev]);
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const markContactMessageRead = async (id, isRead) => {
+    try {
+      const response = await fetch(`/api/contacts/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isRead })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setContacts(prev => prev.map(m => m.id === parseInt(id) ? { ...m, status: isRead ? 'read' : 'unread' } : m));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  const deleteContactMessage = async (id) => {
+    try {
+      const response = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+      const resData = await response.json();
+      if (resData.success) {
+        setContacts(prev => prev.filter(m => m.id !== parseInt(id)));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
+  // Map Ignite Graduation Day list to compatibility schema for Graduation.jsx
+  const events = [
+    {
+      id: 'ev_graduation_day',
+      eventTitle: 'Ignite Graduation Day',
+      status: 'active',
+      galleryImages: igniteImages.map(img => img.image_url)
+    }
+  ];
 
   return (
     <DataContext.Provider value={{
-      clients, setClients,
-      showcases, setShowcases,
-      testimonials, setTestimonials: setTestimonialsSynced,
-      workshops, setWorkshops,
-      events, setEvents,
-      shootingHouseImages, setShootingHouseImages,
-      shootingHouseVideos, setShootingHouseVideos,
-      contacts, setContacts,
-      artistRegistrations, setArtistRegistrations,
-      addContactMessage,
-      addArtistRegistration
+      clients, setClients: () => {}, // Handled by API calls
+      addClientLogo, updateClientLogo, deleteClientLogo,
+      
+      showcases, setShowcases: () => {},
+      addShowcaseVideo, updateShowcaseVideo, deleteShowcaseVideo,
+      
+      testimonials, setTestimonials: () => {},
+      addTestimonialRecord, updateTestimonialRecord, deleteTestimonialRecord,
+      
+      workshops, setWorkshops: () => {},
+      addWorkshopRecord, updateWorkshopRecord, deleteWorkshopRecord,
+      
+      igniteImages, addIgniteImageRecord, deleteIgniteImageRecord,
+      events, // Computed compatibility list
+      
+      shootingHouseImages, addShootingHouseImageRecord, deleteShootingHouseImageRecord,
+      shootingHouseVideos, addShootingHouseVideoRecord, updateShootingHouseVideoRecord, deleteShootingHouseVideoRecord,
+      
+      contacts, addContactMessage, markContactMessageRead, deleteContactMessage,
+      loading
     }}>
       {children}
     </DataContext.Provider>

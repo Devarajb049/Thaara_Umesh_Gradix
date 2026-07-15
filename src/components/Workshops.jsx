@@ -3,92 +3,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PlayCircle, X, Film } from 'lucide-react';
 import { useData } from '../admin/context/DataContext';
 
-export const workshopVideos = [
-  {
-    id: 1,
-    title: "Acting Workshop Highlights",
-    description: "Catch a glimpse of our intensive physical training and emotional expression workshops.",
-    videoUrl: "https://video.wixstatic.com/video/e67e91_7ff82a837b9c4f2c9226ec9cc49f9e40/480p/mp4/file.mp4",
-    thumbnail: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=800&auto=format&fit=crop",
-    duration: "02:15",
-    category: "Workshop"
-  },
-  {
-    id: 2,
-    title: "Camera Acting Masterclass",
-    description: "Detailed breakdown of camera angles, subtle emoting, and framing techniques for actors.",
-    videoUrl: "https://video.wixstatic.com/video/e67e91_b836e153cc7f4e468635a7a7b7f39654/360p/mp4/file.mp4",
-    thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=800&auto=format&fit=crop",
-    duration: "01:45",
-    category: "Masterclass"
-  },
-  {
-    id: 3,
-    title: "Student Success Stories",
-    description: "Hear from our graduates who successfully transitioned from Ignite to television commercials and films.",
-    videoUrl: "https://www.youtube.com/embed/_CZAM4GRc_I",
-    thumbnail: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
-    duration: "03:10",
-    category: "Success Stories"
-  },
-  {
-    id: 4,
-    title: "Screen Presence Training",
-    description: "Specialized grooming sessions focused on posture, voice modulation, and micro-expressions.",
-    videoUrl: "https://www.youtube.com/embed/JdVxbx70vf0",
-    thumbnail: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
-    duration: "01:30",
-    category: "Training"
-  },
-  {
-    id: 5,
-    title: "Portfolio Shoot Behind the Scenes",
-    description: "Graduates getting their professional portfolios shot by celebrity photographers.",
-    videoUrl: "https://www.youtube.com/embed/fJiBFc4IEUQ",
-    thumbnail: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800&auto=format&fit=crop",
-    duration: "02:00",
-    category: "BTS"
-  },
-  {
-    id: 6,
-    title: "Mock Audition Session",
-    description: "Simulating real industry auditions with veteran coordinators to build confidence.",
-    videoUrl: "https://www.youtube.com/embed/xZcq_8JICY8",
-    thumbnail: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=800&auto=format&fit=crop",
-    duration: "02:45",
-    category: "Auditions"
-  },
-  {
-    id: 7,
-    title: "Method Acting Exploration",
-    description: "Exploring psychological realism and sensory exercises for deep character building.",
-    videoUrl: "https://video.wixstatic.com/video/e67e91_adf523a122b441198b11992625da808f/720p/mp4/file.mp4",
-    thumbnail: "https://images.unsplash.com/photo-1503095396549-807759245b35?q=80&w=800&auto=format&fit=crop",
-    duration: "01:58",
-    category: "Method Acting"
-  },
-  {
-    id: 8,
-    title: "Improvisation & Body Language",
-    description: "Spontaneous acting games and bodily movement training to enhance on-set flexibility.",
-    videoUrl: "https://www.youtube.com/embed/GOxcDKppy4U",
-    thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop",
-    duration: "02:20",
-    category: "Improv"
-  }
-];
+// Hardcoded workshopVideos removed. Now loaded dynamically from MySQL.
 
 const Workshops = () => {
   const { workshops } = useData();
-  const activeWorkshops = workshops.filter(w => w.status === 'active').map(w => ({
-    id: w.id,
-    title: w.title,
-    description: w.description || 'Intensive acting school workshops training sessions.',
-    videoUrl: w.videoUrl,
-    thumbnail: w.thumbnail,
-    duration: w.duration,
-    category: w.category
-  }));
+  const activeWorkshops = workshops.map(w => {
+    let ytId = w.videoUrl;
+    if (w.videoUrl.includes('youtube.com') || w.videoUrl.includes('youtu.be')) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = w.videoUrl.match(regExp);
+      if (match && match[2].length === 11) {
+        ytId = match[2];
+      }
+    }
+    
+    let finalVideoUrl = w.videoUrl;
+    if (finalVideoUrl.includes('youtube.com/watch?v=')) {
+      finalVideoUrl = `https://www.youtube.com/embed/${ytId}`;
+    } else if (finalVideoUrl.includes('youtu.be/')) {
+      finalVideoUrl = `https://www.youtube.com/embed/${ytId}`;
+    }
+
+    return {
+      id: w.id,
+      title: 'Workshop Session',
+      description: 'Intensive acting school workshops training sessions.',
+      videoUrl: finalVideoUrl,
+      thumbnail: w.thumbnail || `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`,
+      duration: '02:00',
+      category: 'Practical Training'
+    };
+  });
 
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [visibleCount, setVisibleCount] = useState(6);
@@ -168,7 +113,7 @@ const Workshops = () => {
         </div>
 
         {/* View More Button */}
-        {visibleCount < workshopVideos.length && (
+        {visibleCount < activeWorkshops.length && (
           <div className="mt-16 text-center" data-aos="fade-up">
             <button 
               onClick={handleLoadMore}

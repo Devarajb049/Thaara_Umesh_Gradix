@@ -25,14 +25,18 @@ const Navbar = () => {
     return () => { document.body.style.overflow = 'unset'; }
   }, [isOpen]);
 
-  // Handle smooth scroll for hash links when on the same page
   useEffect(() => {
     if (location.hash) {
-      const element = document.querySelector(location.hash);
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+      try {
+        const decodedHash = decodeURIComponent(location.hash);
+        const element = document.querySelector(decodedHash);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      } catch (err) {
+        console.warn("Invalid hash selector:", location.hash, err);
       }
     } else {
       window.scrollTo(0, 0);
@@ -52,7 +56,7 @@ const Navbar = () => {
             />
           </Link>
 
-          {/* Desktop Links */}
+            {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest text-dark/70">
             {links.map((link) => {
               const isHashLink = link.path.includes('#');
@@ -71,19 +75,10 @@ const Navbar = () => {
                 </Link>
               );
             })}
-            <Link to="/submit-profile" className="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
-              SUBMIT PROFILE
-            </Link>
           </div>
 
-          {/* Mobile Menu Toggle & Submit Profile Button */}
+          {/* Mobile Menu Toggle */}
           <div className="flex md:hidden items-center gap-4">
-            <Link 
-              to="/submit-profile" 
-              className="bg-primary text-white px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest hover:bg-primary-dark transition-all duration-300 shadow-md shadow-primary/20 hover:scale-105 active:scale-95 whitespace-nowrap"
-            >
-              SUBMIT PROFILE
-            </Link>
             <button className="text-dark relative z-40" onClick={() => setIsOpen(true)}>
               <Menu size={24} />
             </button>
@@ -136,14 +131,6 @@ const Navbar = () => {
               </Link>
             );
           })}
-          <Link 
-            to="/submit-profile" 
-            className={`bg-primary text-white px-6 py-3 rounded-full text-center font-semibold text-sm w-full mt-4 shadow-lg shadow-primary/20 transform transition-all duration-500 ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
-            style={{ transitionDelay: `${isOpen ? 100 + links.length * 50 : 0}ms` }}
-            onClick={() => setIsOpen(false)}
-          >
-            SUBMIT PROFILE
-          </Link>
         </div>
       </div>
     </>

@@ -18,80 +18,7 @@ const highlights = [
   "Closing Ceremony Celebration"
 ];
 
-export const galleryImages = [
-  {
-    id: 1,
-    url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
-    title: "Graduation Ceremony",
-    description: "Caps fly high as our graduates celebrate their hard work and success."
-  },
-  {
-    id: 2,
-    url: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop",
-    title: "Certificate Distribution",
-    description: "Students receive their official Ignite Talents acting diplomas."
-  },
-  {
-    id: 3,
-    url: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5c?q=80&w=800&auto=format&fit=crop",
-    title: "Stage Moments & Speeches",
-    description: "Inspiring speeches from industry guests and our founder Ms. Thaara Umesh."
-  },
-  {
-    id: 4,
-    url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop",
-    title: "Group Class Photos",
-    description: "Graduates of the recent batches posing together on stage."
-  },
-  {
-    id: 5,
-    url: "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?q=80&w=800&auto=format&fit=crop",
-    title: "Live Performances",
-    description: "Students showcasing their acting skills in live monologue performances."
-  },
-  {
-    id: 6,
-    url: "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop",
-    title: "Closing Ceremony",
-    description: "Vibrant and celebratory moments marking the end of the event."
-  },
-  {
-    id: 7,
-    url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop",
-    title: "Stage Drama",
-    description: "Theater and screen presence demonstration by upcoming artists."
-  },
-  {
-    id: 8,
-    url: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=800&auto=format&fit=crop",
-    title: "Celebration & Lighting",
-    description: "Premium visual design and stage lighting for the graduation ceremony."
-  },
-  {
-    id: 9,
-    url: "https://images.unsplash.com/photo-1492534513006-37715f336a39?q=80&w=800&auto=format&fit=crop",
-    title: "Industry Networking",
-    description: "Graduates connecting with directors, photographers, and casting agents."
-  },
-  {
-    id: 10,
-    url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop",
-    title: "Awards Ceremony",
-    description: "Honoring outstanding performers in acting, modeling, and presence."
-  },
-  {
-    id: 11,
-    url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop",
-    title: "Graduation Moments",
-    description: "Smiles and joy all around as the new batches step out prepared for the industry."
-  },
-  {
-    id: 12,
-    url: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=800&auto=format&fit=crop",
-    title: "Founder's Address",
-    description: "A warm and encouraging speech by Thaara Umesh to her graduating students."
-  }
-];
+// Hardcoded galleryImages removed. Now loaded dynamically from MySQL.
 
 const Graduation = () => {
   const { events } = useData();
@@ -106,7 +33,7 @@ const Graduation = () => {
           description: ev.description || 'Graduation Ceremony memories.'
         }))
       )
-    : galleryImages;
+    : [];
 
   const [activePhoto, setActivePhoto] = useState(null);
 
@@ -173,7 +100,7 @@ const Graduation = () => {
           <div className="lg:col-span-7" data-aos="fade-left">
             <div className="relative w-full h-full min-h-[300px] rounded-3xl overflow-hidden shadow-lg border border-black/5 bg-black">
               <img
-                src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200&auto=format&fit=crop"
+                src={activeGalleryImages[0]?.url || "/uploads/ignite/ignite-photo-1.jpg"}
                 alt="Graduation Showcase"
                 className="w-full h-full object-cover opacity-80 hover:scale-102 transition-transform duration-700"
               />
@@ -233,8 +160,8 @@ const Graduation = () => {
         <div className="mt-16 text-center" data-aos="fade-up">
           <button
             onClick={() => {
-              if (galleryImages.length > 0) {
-                setActivePhoto(galleryImages[0]);
+              if (activeGalleryImages.length > 0) {
+                setActivePhoto(activeGalleryImages[0]);
               }
             }}
             className="px-8 py-3 rounded-full hover:scale-105 transition-transform duration-300 shadow-lg shadow-primary/20 bg-primary text-white font-bold text-xs tracking-widest uppercase"
@@ -279,9 +206,9 @@ const Graduation = () => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    const idx = galleryImages.findIndex(i => i.id === activePhoto.id);
-                    const prevIdx = idx === 0 ? galleryImages.length - 1 : idx - 1;
-                    setActivePhoto(galleryImages[prevIdx]);
+                    const idx = activeGalleryImages.findIndex(i => i.id === activePhoto.id);
+                    const prevIdx = idx === 0 ? activeGalleryImages.length - 1 : idx - 1;
+                    setActivePhoto(activeGalleryImages[prevIdx]);
                   }}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-primary/95 text-white p-2.5 rounded-full border border-white/10 hover:scale-105 active:scale-95 transition-all duration-300 z-20 shadow-md group"
                   aria-label="Previous image"
@@ -299,9 +226,9 @@ const Graduation = () => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    const idx = galleryImages.findIndex(i => i.id === activePhoto.id);
-                    const nextIdx = idx === galleryImages.length - 1 ? 0 : idx + 1;
-                    setActivePhoto(galleryImages[nextIdx]);
+                    const idx = activeGalleryImages.findIndex(i => i.id === activePhoto.id);
+                    const nextIdx = idx === activeGalleryImages.length - 1 ? 0 : idx + 1;
+                    setActivePhoto(activeGalleryImages[nextIdx]);
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-primary/95 text-white p-2.5 rounded-full border border-white/10 hover:scale-105 active:scale-95 transition-all duration-300 z-20 shadow-md group"
                   aria-label="Next image"
@@ -324,9 +251,9 @@ const Graduation = () => {
                 <div className="mt-auto pt-4 border-t border-white/10 flex gap-2 z-10">
                   <button
                     onClick={() => {
-                      const idx = galleryImages.findIndex(i => i.id === activePhoto.id);
-                      const prevIdx = idx === 0 ? galleryImages.length - 1 : idx - 1;
-                      setActivePhoto(galleryImages[prevIdx]);
+                      const idx = activeGalleryImages.findIndex(i => i.id === activePhoto.id);
+                      const prevIdx = idx === 0 ? activeGalleryImages.length - 1 : idx - 1;
+                      setActivePhoto(activeGalleryImages[prevIdx]);
                     }}
                     className="flex-grow py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold tracking-widest text-center uppercase transition-colors"
                   >
@@ -337,9 +264,9 @@ const Graduation = () => {
                   </button>
                   <button
                     onClick={() => {
-                      const idx = galleryImages.findIndex(i => i.id === activePhoto.id);
-                      const nextIdx = idx === galleryImages.length - 1 ? 0 : idx + 1;
-                      setActivePhoto(galleryImages[nextIdx]);
+                      const idx = activeGalleryImages.findIndex(i => i.id === activePhoto.id);
+                      const nextIdx = idx === activeGalleryImages.length - 1 ? 0 : idx + 1;
+                      setActivePhoto(activeGalleryImages[nextIdx]);
                     }}
                     className="flex-grow py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-dark font-black text-[10px] tracking-widest text-center uppercase transition-colors shadow-md shadow-black/10"
                   >

@@ -10,30 +10,31 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
-    if (email === 'admin' && password === 'admin') {
-      triggerLoginSuccess();
-    } else {
-      setError('Invalid username or password. For demo, use admin / admin or click Demo Login.');
-    }
-  };
-
-  const handleDemoLogin = () => {
-    setEmail('admin');
-    setPassword('admin');
-    triggerLoginSuccess();
-  };
-
-  const triggerLoginSuccess = () => {
     setLoading(true);
-    setTimeout(() => {
-      localStorage.setItem('admin-logged-in', 'true');
-      navigate('/admin');
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        localStorage.setItem('admin-logged-in', 'true');
+        navigate('/admin');
+      } else {
+        setError(data.message || 'Invalid username or password.');
+      }
+    } catch (err) {
+      setError('Connection to backend failed. Make sure your server is running.');
+      console.error(err);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -117,39 +118,15 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-white hover:bg-[#FCF8F8] text-primary border border-primary font-semibold text-sm rounded-xl active:scale-98 transition-all flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-semibold text-sm rounded-xl active:scale-98 transition-all flex items-center justify-center gap-2 mt-2"
           >
             <span>Sign In</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-
-          {/* Demo Login Divider */}
-          <div className="relative flex py-3 items-center select-none">
-            <div className="flex-grow border-t border-zinc-200" />
-            <span className="flex-shrink mx-4 text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
-              Demo Review Bypass
-            </span>
-            <div className="flex-grow border-t border-zinc-200" />
-          </div>
-
-          {/* Demo Login Button */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold text-sm rounded-xl shadow-md shadow-primary/10 hover:shadow-primary/20 active:scale-98 transition-all flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4 fill-current" />
-            <span>Quick Demo Login</span>
-          </button>
         </form>
-
-        <p className="text-[10px] text-zinc-450 text-center mt-6">
-          Evaluation Credentials: <span className="text-zinc-700 font-bold">admin / admin</span>
-        </p>
       </motion.div>
     </div>
   );
 };
 
-export default AdminLogin;
+  export default AdminLogin;

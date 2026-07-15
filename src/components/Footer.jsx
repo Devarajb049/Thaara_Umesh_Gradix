@@ -2,19 +2,25 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const links = {
-    QuickLinks: ['Home', 'About Us', 'Showcase', 'Acting Advice'],
+    QuickLinks: [
+      { name: 'Home', path: '/' },
+      { name: 'Our Clients', path: '/ourclients' },
+      { name: 'Showcase', path: '/showcase' },
+      { name: 'Acting School', path: '/actingschool' },
+      { name: 'Shooting House', path: '/shootinghouse' },
+      { name: 'Contact Us', path: '/contact' }
+    ],
     Social: [
       { name: 'Facebook', url: 'https://www.facebook.com/thaaraumesh.modelling.agency/' },
       { name: 'Instagram', url: 'https://www.instagram.com/taaraumesh/' },
       { name: 'YouTube', url: 'https://www.youtube.com/@thaaraumeshcasting' },
-    ],
-    Legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy']
+    ]
   };
 
   return (
     <footer className="bg-secondary pt-20 pb-10 px-6 border-t border-black/5">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
-        <div className="max-w-sm">
+        <div className="max-w-sm text-left">
           <h3 className="text-2xl font-serif text-primary font-semibold mb-6">Thaara Umesh Casting Agency</h3>
           <p className="text-dark/60 text-sm leading-relaxed mb-8">
             A leading powerhouse in casting and talent representation since 1998. Our commitment is to find and groom the stars of tomorrow.
@@ -38,14 +44,14 @@ const Footer = () => {
             ))}
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-16">
+ 
+        <div className="flex flex-wrap gap-16 text-left">
           <div>
             <h4 className="font-bold text-xs tracking-widest text-dark mb-6 uppercase">Quick Links</h4>
             <ul className="flex flex-col gap-4">
               {links.QuickLinks.map((link, i) => (
                 <li key={i}>
-                  <a href={`#${link}`} className="text-sm text-dark/70 hover:text-primary transition-colors">{link}</a>
+                  <Link to={link.path} className="text-sm text-dark/70 hover:text-primary transition-colors">{link.name}</Link>
                 </li>
               ))}
             </ul>
@@ -63,16 +69,6 @@ const Footer = () => {
                   >
                     {link.name}
                   </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-xs tracking-widest text-dark mb-6 uppercase">Legal</h4>
-            <ul className="flex flex-col gap-4">
-              {links.Legal.map((link, i) => (
-                <li key={i}>
-                  <a href={`#${link}`} className="text-sm text-dark/70 hover:text-primary transition-colors">{link}</a>
                 </li>
               ))}
             </ul>

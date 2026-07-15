@@ -1,6 +1,25 @@
 import { Link } from 'react-router-dom';
+import { useData } from '../admin/context/DataContext';
 
 const Showcase = () => {
+  const { showcases } = useData();
+  
+  // Get first showcase video as the featured video
+  const featuredVideo = showcases[0];
+  let embedUrl = "https://www.youtube.com/embed/BQ_d2rMpLwk?autoplay=1&mute=1&loop=1&playlist=BQ_d2rMpLwk";
+  
+  if (featuredVideo) {
+    const url = featuredVideo.youtube_url;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      const ytId = match[2];
+      embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}`;
+    } else {
+      embedUrl = url;
+    }
+  }
+
   return (
     <section id="showcase" className="py-12 md:py-16 px-6 relative overflow-hidden">
       {/* Ambient Background Glows */}
@@ -30,7 +49,7 @@ const Showcase = () => {
 
           <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-inner">
             <iframe 
-              src="https://www.youtube.com/embed/BQ_d2rMpLwk?si=HWCbdLBkEPj&autoplay=1&mute=1&loop=1&playlist=BQ_d2rMpLwk" 
+              src={embedUrl} 
               title="Showcase Video" 
               frameBorder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
