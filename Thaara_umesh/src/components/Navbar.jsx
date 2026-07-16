@@ -12,6 +12,8 @@ const Navbar = () => {
     { name: 'SHOWCASE', path: '/showcase' },
     { name: 'ACTING SCHOOL', path: '/actingschool' },
     { name: 'SHOOTING HOUSE', path: '/shootinghouse' },
+    { name: 'ARTISTS', path: '/artists' },
+    { name: 'JOIN US', path: '/artist-registration' },
     { name: 'CONTACT US', path: '/contact' }
   ];
 

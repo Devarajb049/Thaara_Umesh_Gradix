@@ -21,14 +21,14 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|webp|gif/;
-    const mimetype = filetypes.test(file.mimetype);
+    const filetypes = /jpeg|jpg|png|webp|gif|pdf/;
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf';
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error('Only images (jpg, jpeg, png, webp, gif) are allowed!'));
+    cb(new Error('Only images and PDF documents are allowed!'));
   }
 });
 

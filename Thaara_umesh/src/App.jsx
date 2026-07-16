@@ -9,12 +9,16 @@ import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
 import CustomCursor from './components/CustomCursor';
 
+// Public Imports
 import Home from './pages/Home';
 import OurClientsPage from './pages/OurClientsPage';
 import ShowcasePage from './pages/ShowcasePage';
 import ActingSchoolPage from './pages/ActingSchoolPage';
 import ContactUsPage from './pages/ContactUsPage';
 import ShootingHousePage from './pages/ShootingHousePage';
+import ArtistsPage from './pages/ArtistsPage';
+import ArtistRegistrationPage from './pages/ArtistRegistrationPage';
+import SecureArtistProfilePage from './pages/SecureArtistProfilePage';
 
 // Admin Imports
 import AdminLayout from './admin/AdminLayout';
@@ -25,6 +29,11 @@ import ActingSchoolManager from './admin/pages/ActingSchoolManager';
 import ShootingHouseManager from './admin/pages/ShootingHouseManager';
 import ContactManager from './admin/pages/ContactManager';
 import AdminLogin from './admin/pages/AdminLogin';
+import ArtistsDashboard from './admin/pages/ArtistsDashboard';
+import ArtistListManager from './admin/pages/ArtistListManager';
+import ArtistDetails from './admin/pages/ArtistDetails';
+import ProfileRequestsManager from './admin/pages/ProfileRequestsManager';
+
 import { DataProvider } from './admin/context/DataContext';
 
 // Public Layout to isolate original Navbar, Footer, and BackToTop from Admin
@@ -89,7 +98,12 @@ function App() {
             <Route path="/actingschool" element={<ActingSchoolPage />} />
             <Route path="/contact" element={<ContactUsPage />} />
             <Route path="/shootinghouse" element={<ShootingHousePage />} />
+            <Route path="/artists" element={<ArtistsPage />} />
+            <Route path="/artist-registration" element={<ArtistRegistrationPage />} />
           </Route>
+
+          {/* Secure Profile access route (independent from PublicLayout to be standalone) */}
+          <Route path="/artist-access/:token" element={<SecureArtistProfilePage />} />
 
           {/* Admin Login Route */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -102,6 +116,12 @@ function App() {
             <Route path="acting-school" element={<ActingSchoolManager />} />
             <Route path="shooting-house" element={<ShootingHouseManager />} />
             <Route path="contact" element={<ContactManager />} />
+            <Route path="artists-dashboard" element={<ArtistsDashboard />} />
+            <Route path="artists/pending" element={<ArtistListManager />} />
+            <Route path="artists/approved" element={<ArtistListManager />} />
+            <Route path="artists/rejected" element={<ArtistListManager />} />
+            <Route path="artists/:id" element={<ArtistDetails />} />
+            <Route path="profile-requests" element={<ProfileRequestsManager />} />
           </Route>
         </Routes>
       </Router>

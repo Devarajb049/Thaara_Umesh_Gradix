@@ -16,6 +16,7 @@ import workshopRoutes from './routes/workshopRoutes.js';
 import igniteRoutes from './routes/igniteRoutes.js';
 import shootingHouseRoutes from './routes/shootingHouseRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import artistRoutes from './routes/artistRoutes.js';
 
 // Middleware Imports
 import upload from './middlewares/uploadMiddleware.js';
@@ -88,6 +89,7 @@ app.use('/api/workshops', workshopRoutes);
 app.use('/api/ignite-images', igniteRoutes);
 app.use('/api/shooting-house', shootingHouseRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/artists', artistRoutes);
 
 // Root test endpoint
 app.get('/api/health', (req, res) => {

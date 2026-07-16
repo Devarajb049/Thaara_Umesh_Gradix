@@ -300,6 +300,54 @@ export async function initializeDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    // Create Artists Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`artists\` (
+        \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+        \`fullName\` VARCHAR(255) NOT NULL,
+        \`email\` VARCHAR(255) NOT NULL,
+        \`phone\` VARCHAR(50) NOT NULL,
+        \`dob\` VARCHAR(50),
+        \`gender\` VARCHAR(20),
+        \`address\` TEXT,
+        \`city\` VARCHAR(100),
+        \`state\` VARCHAR(100),
+        \`country\` VARCHAR(100),
+        \`height\` VARCHAR(20),
+        \`weight\` VARCHAR(20),
+        \`languages\` VARCHAR(255),
+        \`experience\` TEXT,
+        \`skills\` TEXT,
+        \`categories\` VARCHAR(255),
+        \`instagram\` VARCHAR(255),
+        \`facebook\` VARCHAR(255),
+        \`portfolioWebsite\` VARCHAR(255),
+        \`profileDescription\` TEXT,
+        \`profilePhoto\` VARCHAR(555),
+        \`portfolioImages\` TEXT,
+        \`resumeUrl\` VARCHAR(555),
+        \`introVideoUrl\` VARCHAR(555),
+        \`status\` VARCHAR(20) DEFAULT 'pending',
+        \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Create Artist Profile Requests Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`artist_profile_requests\` (
+        \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+        \`requesterName\` VARCHAR(255) NOT NULL,
+        \`requesterEmail\` VARCHAR(255) NOT NULL,
+        \`companyName\` VARCHAR(255) NOT NULL,
+        \`reason\` TEXT NOT NULL,
+        \`artistId\` INT NOT NULL,
+        \`status\` VARCHAR(20) DEFAULT 'pending',
+        \`accessToken\` VARCHAR(255) DEFAULT NULL,
+        \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     console.log('Tables created or verified.');
 
     // 3. Seeding Tables if empty

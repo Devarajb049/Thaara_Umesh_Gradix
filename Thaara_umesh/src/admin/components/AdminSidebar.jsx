@@ -11,7 +11,12 @@ import {
   UserPlus, 
   ArrowLeft,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Clock,
+  UserCheck,
+  UserX,
+  Key,
+  Users
 } from 'lucide-react';
 
 const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
@@ -21,7 +26,12 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
     { name: 'Showcase', path: '/admin/showcase', icon: <Tv className="w-5 h-5 flex-shrink-0" /> },
     { name: 'Acting School', path: '/admin/acting-school', icon: <GraduationCap className="w-5 h-5 flex-shrink-0" /> },
     { name: 'Shooting House', path: '/admin/shooting-house', icon: <Camera className="w-5 h-5 flex-shrink-0" /> },
-    { name: 'Contact Messages', path: '/admin/contact', icon: <Inbox className="w-5 h-5 flex-shrink-0" /> }
+    { name: 'Contact Messages', path: '/admin/contact', icon: <Inbox className="w-5 h-5 flex-shrink-0" /> },
+    { name: 'Artists Dashboard', path: '/admin/artists-dashboard', icon: <Users className="w-5 h-5 flex-shrink-0" /> },
+    { name: 'Pending Artists', path: '/admin/artists/pending', icon: <Clock className="w-5 h-5 flex-shrink-0" /> },
+    { name: 'Approved Artists', path: '/admin/artists/approved', icon: <UserCheck className="w-5 h-5 flex-shrink-0" /> },
+    { name: 'Rejected Artists', path: '/admin/artists/rejected', icon: <UserX className="w-5 h-5 flex-shrink-0" /> },
+    { name: 'Profile Requests', path: '/admin/profile-requests', icon: <Key className="w-5 h-5 flex-shrink-0" /> }
   ];
 
   const sidebarContent = (
